@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pandas
+scikit-learn
+numpy
+
+
+#Library	Kya kaam karegi?
+#FastAPI	Python mein AI service ki REST API banayegi
+#Uvicorn	FastAPI application ko server par run karega
+#Pandas	Dataset ko read, clean aur process karne ke kaam aayega
+#Scikit-learn	Humare ML models banane/train/evaluate karne ke kaam aayega
+#NumPy	Numbers, arrays aur ML ke underlying calculations ke liye
