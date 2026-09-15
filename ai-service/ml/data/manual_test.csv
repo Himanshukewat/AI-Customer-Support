@@ -1,0 +1,101 @@
+instruction,intent
+"I want to cancel my order",cancel_order
+"please cancel my purchase",cancel_order
+"can I stop the order I just placed",cancel_order
+"I don't want this order anymore",cancel_order
+"cancel order number 12345",cancel_order
+"please stop my current order",cancel_order
+"I need to cancel a recent purchase",cancel_order
+"how do I cancel an order",cancel_order
+"can you cancel my order for me",cancel_order
+"I placed the wrong order and want to cancel it",cancel_order
+"I need to change something in my order",change_order
+"can I modify my order",change_order
+"I want to change an item I ordered",change_order
+"can I replace one product in my order",change_order
+"I ordered the wrong item, can I change it",change_order
+"help me edit my order",change_order
+"I need to update my purchase",change_order
+"can I swap an item in my order",change_order
+"I want to modify an existing order",change_order
+"please change something in my purchase",change_order
+"where is my order right now",track_order
+"can you tell me where my package is",track_order
+"I want to track my order",track_order
+"where can I find my order status",track_order
+"has my order been shipped",track_order
+"can you locate my package",track_order
+"what is the status of my delivery",track_order
+"I need to know where my purchase is",track_order
+"track order 12345 please",track_order
+"where is my package",track_order
+"I want to place an order",place_order
+"how can I buy this product",place_order
+"I would like to order an item",place_order
+"how do I purchase something",place_order
+"I want to buy a product",place_order
+"can I order this item",place_order
+"help me place an order",place_order
+"I'd like to make a purchase",place_order
+"where can I order this product",place_order
+"please help me order something",place_order
+"I need a copy of my invoice",get_invoice
+"please send me my invoice",get_invoice
+"how do I download my invoice",get_invoice
+"I need to get my bill",get_invoice
+"can you send me a copy of the bill",get_invoice
+"where can I download my invoice",get_invoice
+"I want to receive my invoice",get_invoice
+"please provide my bill",get_invoice
+"can I get a copy of my purchase invoice",get_invoice
+"send me my invoice please",get_invoice
+"I want to check my invoice",check_invoice
+"can I view my invoice",check_invoice
+"I need to look at my bill",check_invoice
+"how can I check my invoice",check_invoice
+"I have a question about my invoice",check_invoice
+"where can I see my bill",check_invoice
+"I want to review my invoice",check_invoice
+"can I see the details on my invoice",check_invoice
+"I need information from my bill",check_invoice
+"help me check my invoice",check_invoice
+"I want to create an account",create_account
+"how do I register",create_account
+"help me make a new account",create_account
+"I need a new account",create_account
+"how can I sign up",create_account
+"can I create a customer account",create_account
+"I'd like to register for an account",create_account
+"where do I create an account",create_account
+"help me sign up",create_account
+"I want to open a new account",create_account
+"I want to delete my account",delete_account
+"please close my account",delete_account
+"how can I remove my account",delete_account
+"I don't want my account anymore",delete_account
+"can you delete my account",delete_account
+"I need to close my customer account",delete_account
+"how do I permanently remove my account",delete_account
+"I want my account deleted",delete_account
+"please deactivate my account",delete_account
+"help me get rid of my account",delete_account
+"I need to update my account details",edit_account
+"I want to change my account information",edit_account
+"help me modify my profile",edit_account
+"how can I edit my account",edit_account
+"I need to update my personal details",edit_account
+"can I change the information on my account",edit_account
+"I want to modify my profile information",edit_account
+"please update my account",edit_account
+"how do I change my account details",edit_account
+"help me edit my profile",edit_account
+"I forgot my password",recover_password
+"I cannot remember my login password",recover_password
+"how can I reset my password",recover_password
+"I can't log in because I forgot my password",recover_password
+"help me recover my password",recover_password
+"what do I do if I forget my password",recover_password
+"I lost my account password",recover_password
+"can I reset my login password",recover_password
+"forgot password, need help",recover_password
+"how do I get back into my account",recover_password

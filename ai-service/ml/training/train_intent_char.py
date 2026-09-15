@@ -3,7 +3,7 @@ from pathlib import Path
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 
 
@@ -28,18 +28,36 @@ def train_model():
     print("Testing rows:", len(X_test))
 
     model = Pipeline([
-        (
-            "tfidf", TfidfVectorizer(
-            lowercase=True,
-            ngram_range=(1, 2),
-            min_df=2,
+    (
+        "features",
+        FeatureUnion([
+            (
+                "word_tfidf",
+                TfidfVectorizer(
+                    lowercase=True,
+                    analyzer="word",
+                    ngram_range=(1, 2),
+                    min_df=2
+                )
+            ),
+            (
+                "char_tfidf",
+                TfidfVectorizer(
+                    lowercase=True,
+                    analyzer="char",
+                    ngram_range=(3, 5),
+                    min_df=2
+                )
             )
-        ),
-        (
-            "classifier", LogisticRegression(
-                max_iter=1000,
+        ])
+    ),
+    (
+        "classifier",
+        LogisticRegression(
+            max_iter=1000
         )
-    )])
+    )
+    ])
 
 
     print("\nTraining model...")
