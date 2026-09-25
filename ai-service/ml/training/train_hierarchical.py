@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+import joblib
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -421,6 +422,14 @@ def train_model():
     intent_model = train_intent_model(train_df)
     evaluate_model(category_model, intent_model, test_df)
     manual_test(category_model, intent_model, train_df)
+
+    MODEL_DIR = BASE_DIR / "ml" / "models"
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+    joblib.dump(category_model, MODEL_DIR / "category_model.pkl")
+    joblib.dump(intent_model, MODEL_DIR / "intent_model.pkl")
+
+    print("\nModels saved successfully.")
 
 if __name__ == "__main__":
     train_model()
