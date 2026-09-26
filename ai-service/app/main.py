@@ -18,6 +18,17 @@ MODEL_DIR = BASE_DIR / "ml" / "models"
 category_model = joblib.load(MODEL_DIR / "category_model.pkl")
 intent_model =  joblib.load(MODEL_DIR / "intent_model.pkl")
 
+sentiment_model = joblib.load(MODEL_DIR / "sentiment_model.pkl")
+sentiment_vectorizer = joblib.load(MODEL_DIR / "sentiment_vectorizer.pkl")
+
+sentiment_labels = {
+    0: "Strong Negative",
+    1: "Mild Negative",
+    2: "Neutral",
+    3: "Mild Positive",
+    4: "Strong Positive"
+}
+
 
 @app.get("/")
 def home():
@@ -39,7 +50,7 @@ def analyze_ticket(ticket: TicketRequest):
     # predict intent + confidence
 
     if isinstance(model, str):
-        intent = intent_model
+        intent = model
         confidence = 1.0
     else:
         intent = model.predict(
@@ -56,12 +67,38 @@ def analyze_ticket(ticket: TicketRequest):
         confidence = probabilities[
             list(classes).index(intent)
         ]
+
+    # predict sentiment
+
+    # predict sentiment
+
+    sentiment_text = sentiment_vectorizer.transform(
+        [ticket.description]
+    )
+
+    sentiment_prediction = sentiment_model.predict(
+        sentiment_text
+    )[0]
+
+    sentiment = sentiment_labels[
+        int(sentiment_prediction)
+    ]
+
+    sentiment_probabilities = sentiment_model.predict_proba(
+        sentiment_text
+    )[0]
+
+    sentiment_classes = sentiment_model.classes_
+
+    sentiment_confidence = sentiment_probabilities[
+        list(sentiment_classes).index(sentiment_prediction)
+    ]
             
 
     return {
         "category": category,
         "sub_category": intent,
-        "sentiment": "",
+        "sentiment": sentiment,
         "priority": "",
         "confidence": float(confidence)
     }
