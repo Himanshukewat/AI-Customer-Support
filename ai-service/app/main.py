@@ -21,6 +21,9 @@ intent_model =  joblib.load(MODEL_DIR / "intent_model.pkl")
 sentiment_model = joblib.load(MODEL_DIR / "sentiment_model.pkl")
 sentiment_vectorizer = joblib.load(MODEL_DIR / "sentiment_vectorizer.pkl")
 
+urgency_model = joblib.load(MODEL_DIR / "urgency_model.pkl")
+urgency_vectorizer = joblib.load(MODEL_DIR / "urgency_vectorizer.pkl")
+
 sentiment_labels = {
     0: "Strong Negative",
     1: "Mild Negative",
@@ -70,8 +73,6 @@ def analyze_ticket(ticket: TicketRequest):
 
     # predict sentiment
 
-    # predict sentiment
-
     sentiment_text = sentiment_vectorizer.transform(
         [ticket.description]
     )
@@ -93,12 +94,25 @@ def analyze_ticket(ticket: TicketRequest):
     sentiment_confidence = sentiment_probabilities[
         list(sentiment_classes).index(sentiment_prediction)
     ]
+
+    # predict urgency
+    urgency_input = (
+        ticket.description
+        + " sentiment " + sentiment.lower()
+        + " category" + category.lower()
+    )
+
+    urgency_text = urgency_vectorizer.transform(
+        [urgency_input]
+    )
+    urgency_prediction = urgency_model.predict(urgency_text)[0]
+    urgency = str(urgency_prediction)
             
 
     return {
         "category": category,
         "sub_category": intent,
         "sentiment": sentiment,
-        "priority": "",
+        "priority": urgency,
         "confidence": float(confidence)
     }
