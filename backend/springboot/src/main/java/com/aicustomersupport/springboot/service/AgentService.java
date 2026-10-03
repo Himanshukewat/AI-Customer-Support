@@ -12,6 +12,8 @@ public class AgentService {
     }
 
     public String handleTicket(String subCategory, Long orderId){
+        System.out.println("AGENT SUBCATEGORY = [" + subCategory + "]");
+        System.out.println("AGENT ORDER ID = [" + orderId + "]");
         if("track_order".equalsIgnoreCase(subCategory)){
             if(orderId == null){
                 return "Order ID is required to track the order.";
@@ -21,6 +23,12 @@ public class AgentService {
                 return "Order not found.";
             }
             return "Order " + order.getOrderId() + " is currently " + order.getStatus() + ".";
+        }
+        if ("cancel_order".equalsIgnoreCase(subCategory)) {
+            if (orderId == null) {
+                return "Order ID is required to cancel the order.";
+            }
+            return orderService.cancelOrder(String.valueOf(orderId));
         }
         return "This request requires human review.";
     }
