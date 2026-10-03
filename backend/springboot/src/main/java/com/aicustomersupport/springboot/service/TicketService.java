@@ -17,6 +17,7 @@ public class TicketService {
 
     private final TicketRepository ticketRepository;
     private final AIService aiService;
+    private static final double CONFIDENCE_THRESHOLD = 0.80;
 
     public TicketService(TicketRepository ticketRepository,AIService aiService) {
         this.ticketRepository = ticketRepository;
@@ -24,6 +25,7 @@ public class TicketService {
     }
 
     public Ticket createTicket(Ticket ticket) {
+        ticket.setAiStatus("AI_PENDING");
         Ticket savedTicket = ticketRepository.save(ticket);
         // prepare ai servicw
 
@@ -39,6 +41,7 @@ public class TicketService {
         aiRequest.setDescription(savedTicket.getDescription());
 
         // send ticket to ai srvice
+        try {
         TicketAIResponse aiResponse = aiService.analyzeTicket(aiRequest);
 
         // store ai result in ticket
@@ -48,6 +51,18 @@ public class TicketService {
         savedTicket.setSentiment(aiResponse.getSentiment());
         savedTicket.setPriority(aiResponse.getPriority());
         savedTicket.setAiConfidence(aiResponse.getConfidence());
+        
+        savedTicket.setAiStatus("AI_COMPLETED");
+
+        if (aiResponse.getConfidence() >= CONFIDENCE_THRESHOLD) {
+          savedTicket.setAiDecision("AUTO_HANDLED");
+        } else {
+            savedTicket.setAiDecision("HUMAN_REVIEW");
+      }
+        } catch (Exception e) {
+            System.out.println("AI service call failed:" + e.getMessage());
+            savedTicket.setAiStatus("AI_FAILED");
+        }
 
         return ticketRepository.save(savedTicket);
     }
@@ -83,6 +98,5 @@ public class TicketService {
 
     public void deleteTicket(Long id) {
         ticketRepository.deleteById(id);
-    }
-    
+    } 
 }

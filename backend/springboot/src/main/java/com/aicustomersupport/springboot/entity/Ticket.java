@@ -28,6 +28,8 @@ public class Ticket {
 
     private String assignedTo;
     private Double aiConfidence;
+    private String aiStatus;
+    private String aiDecision;
     private String resolution;
 
     
