@@ -18,10 +18,12 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final AIService aiService;
     private static final double CONFIDENCE_THRESHOLD = 0.80;
+    private final AgentService agentService;
 
-    public TicketService(TicketRepository ticketRepository,AIService aiService) {
+    public TicketService(TicketRepository ticketRepository,AIService aiService, AgentService agentService) {
         this.ticketRepository = ticketRepository;
         this.aiService = aiService;
+        this.agentService = agentService;
     }
 
     public Ticket createTicket(Ticket ticket) {
@@ -55,7 +57,12 @@ public class TicketService {
         savedTicket.setAiStatus("AI_COMPLETED");
 
         if (aiResponse.getConfidence() >= CONFIDENCE_THRESHOLD) {
-          savedTicket.setAiDecision("AUTO_HANDLED");
+                savedTicket.setAiDecision("AUTO_HANDLED");
+                String agentResult = agentService.handleTicket(
+                    savedTicket.getSubCategory(),
+                    savedTicket.getOrderId()
+            );
+            savedTicket.setResolution(agentResult);
         } else {
             savedTicket.setAiDecision("HUMAN_REVIEW");
       }
