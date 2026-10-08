@@ -2,13 +2,16 @@ package com.aicustomersupport.springboot.service;
 
 import org.springframework.stereotype.Service;
 import com.aicustomersupport.springboot.entity.Order;
+import com.aicustomersupport.springboot.entity.Refund;
 
 @Service 
 public class AgentService {
     private final OrderService orderService;
+    private final RefundService refundService;
 
-    public AgentService(OrderService orderService) {
+    public AgentService(OrderService orderService, RefundService refundService) {
         this.orderService = orderService;
+        this.refundService = refundService;
     }
 
     public AgentResult handleTicket(String subCategory, Long orderId){
@@ -50,6 +53,31 @@ public class AgentService {
                 true,
                 false,
                 result
+            );
+        }
+
+        if("check_refund".equalsIgnoreCase(subCategory) || "track_refund".equalsIgnoreCase(subCategory)){
+            if(orderId == null){
+                return new AgentResult(
+                    false,
+                    true,
+                    "Order ID is required to check refund status."
+                );
+            }
+            Refund refund = refundService.getRefundByOrderId(String.valueOf(orderId));
+            if(refund == null){
+                return new AgentResult(
+                    false,
+                    true,
+                    "No refund found for order " + orderId + "."
+                );
+            }
+            return new AgentResult(
+                true,
+                false,
+                "Refund for order " + orderId
+                    + " is currently " + refund.getStatus()
+                    + " for amount " + refund.getAmount() + "."
             );
         }
         return new AgentResult(
