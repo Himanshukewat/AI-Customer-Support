@@ -24,6 +24,7 @@ public class AgentService {
             }
             return "Order " + order.getOrderId() + " is currently " + order.getStatus() + ".";
         }
+        
         if ("cancel_order".equalsIgnoreCase(subCategory)) {
             if (orderId == null) {
                 return "Order ID is required to cancel the order.";

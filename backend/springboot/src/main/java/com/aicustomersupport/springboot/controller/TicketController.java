@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 public class TicketController {
@@ -41,6 +42,11 @@ public class TicketController {
         return ticketService.getTicketById(id);
     }
 
+    @GetMapping("/tickets/human-review")
+    public List<Ticket> getHumanReviewTickets() {
+        return ticketService.getHumanReviewTickets();
+    }
+
 
     @PutMapping ("/tickets/{id}")
     public Ticket updateTicket(@PathVariable Long id, @RequestBody Ticket ticket) {
@@ -51,6 +57,28 @@ public class TicketController {
     public ResponseEntity<?> deleteTicket(@PathVariable Long id) {
         ticketService.deleteTicket(id);
         return ResponseEntity.ok().build();
+    } 
+
+    @PutMapping("/tickets/{id}/assign")
+    public ResponseEntity<?> assignTicket(@PathVariable Long id, @RequestParam String assignedTo){
+        Ticket ticket = ticketService.assignTicket(id, assignedTo);
+
+        if(ticket == null){
+            return ResponseEntity.badRequest().body("Ticket cannot be assigned");
+        }
+        return ResponseEntity.ok(ticket);
     }
 
+    @PutMapping("/tickets/{id}/resolve")
+    public ResponseEntity<?> resolveTicket(
+            @PathVariable Long id,
+            @RequestParam String resolution) {
+
+        Ticket ticket = ticketService.resolveTicket(id, resolution);
+        if (ticket == null) {
+            return ResponseEntity.badRequest()
+                    .body("Ticket cannot be resolved.");
+        }
+        return ResponseEntity.ok(ticket);
+    }
 }

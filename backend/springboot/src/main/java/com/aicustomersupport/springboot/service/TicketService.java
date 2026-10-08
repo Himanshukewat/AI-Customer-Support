@@ -69,6 +69,8 @@ public class TicketService {
         } catch (Exception e) {
             System.out.println("AI service call failed:" + e.getMessage());
             savedTicket.setAiStatus("AI_FAILED");
+            savedTicket.setAiDecision("HUMAN_REVIEW");
+            savedTicket.setStatus("OPEN");
         }
 
         return ticketRepository.save(savedTicket);
@@ -76,6 +78,13 @@ public class TicketService {
 
     public List<Ticket> getAllTickets() {
         return ticketRepository.findAll();
+    }
+
+    public List<Ticket> getHumanReviewTickets() {
+        System.out.println("HUMAN REVIEW ENDPOINT CALLED");
+        List<Ticket> tickets = ticketRepository.findByAiDecision("HUMAN_REVIEW");
+        System.out.println("HUMAN REVIEW COUNT: " + tickets.size());
+        return tickets;
     }
 
 
@@ -106,4 +115,46 @@ public class TicketService {
     public void deleteTicket(Long id) {
         ticketRepository.deleteById(id);
     } 
+
+    /**
+    * 
+    * Ticket nahi mila
+            → null
+
+        AI decision HUMAN_REVIEW nahi
+            → assign nahi hoga
+
+        HUMAN_REVIEW
+            → assignedTo set
+            → status = IN_PROGRESS
+            → DB save
+     */
+
+    public Ticket assignTicket(Long id, String assignedTo){
+        Ticket ticket = ticketRepository.findById(id).orElse(null);
+        if(ticket == null){
+            return null;
+        }
+        if(!"HUMAN_REVIEW".equalsIgnoreCase(ticket.getAiDecision())){
+            return null;
+        }
+
+        ticket.setAssignedTo(assignedTo);
+        ticket.setStatus("IN_PROCESS");
+
+        return ticketRepository.save(ticket);
+    }
+
+    public Ticket resolveTicket(Long id, String resolution) {
+        Ticket ticket = ticketRepository.findById(id).orElse(null);
+        if (ticket == null) {
+            return null;
+        }
+        if (!"IN_PROCESS".equalsIgnoreCase(ticket.getStatus())) {
+            return null;
+        }
+        ticket.setResolution(resolution);
+        ticket.setStatus("RESOLVED");
+        return ticketRepository.save(ticket);
+    }
 }
