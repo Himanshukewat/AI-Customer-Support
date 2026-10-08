@@ -55,14 +55,22 @@ public class TicketService {
         savedTicket.setAiConfidence(aiResponse.getConfidence());
         
         savedTicket.setAiStatus("AI_COMPLETED");
+        
 
         if (aiResponse.getConfidence() >= CONFIDENCE_THRESHOLD) {
                 savedTicket.setAiDecision("AUTO_HANDLED");
-                String agentResult = agentService.handleTicket(
+                AgentResult agentResult = agentService.handleTicket(
                     savedTicket.getSubCategory(),
                     savedTicket.getOrderId()
             );
-            savedTicket.setResolution(agentResult);
+            savedTicket.setResolution(agentResult.getMessage());
+            if (agentResult.isSuccess()) {
+                savedTicket.setAiDecision("AUTO_HANDLED");
+                savedTicket.setStatus("RESOLVED");
+            } else if(agentResult.isRequiresHuman()){
+                savedTicket.setAiDecision("HUMAN_REVIEW");
+                savedTicket.setStatus("OPEN");
+            }
         } else {
             savedTicket.setAiDecision("HUMAN_REVIEW");
       }

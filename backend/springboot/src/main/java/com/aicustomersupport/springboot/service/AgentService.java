@@ -11,27 +11,52 @@ public class AgentService {
         this.orderService = orderService;
     }
 
-    public String handleTicket(String subCategory, Long orderId){
+    public AgentResult handleTicket(String subCategory, Long orderId){
         System.out.println("AGENT SUBCATEGORY = [" + subCategory + "]");
         System.out.println("AGENT ORDER ID = [" + orderId + "]");
         if("track_order".equalsIgnoreCase(subCategory)){
             if(orderId == null){
-                return "Order ID is required to track the order.";
+                return new AgentResult(
+                    false,
+                    true,
+                    "Order ID is required to track the order."
+                );
             }
             Order order = orderService.getOrderByOrderId(String.valueOf(orderId));
             if(order == null){
-                return "Order not found.";
+                return new AgentResult(
+                    false,
+                    true,
+                    "Order not found."
+                );
             }
-            return "Order " + order.getOrderId() + " is currently " + order.getStatus() + ".";
+            return new AgentResult(
+                true,
+                false,
+                "Order " + order.getOrderId() + " is currently " + order.getStatus() + "."
+            );
         }
         
         if ("cancel_order".equalsIgnoreCase(subCategory)) {
             if (orderId == null) {
-                return "Order ID is required to cancel the order.";
+                return new AgentResult(
+                    false,
+                    true,
+                    "Order ID is required to cancel the order."
+                );
             }
-            return orderService.cancelOrder(String.valueOf(orderId));
+            String result = orderService.cancelOrder(String.valueOf(orderId));
+            return new AgentResult(
+                true,
+                false,
+                result
+            );
         }
-        return "This request requires human review.";
+        return new AgentResult(
+            false,
+            true,
+            "This request requires human review."
+        );
     }
 
 }
