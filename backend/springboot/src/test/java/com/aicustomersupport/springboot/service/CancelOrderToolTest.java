@@ -13,7 +13,10 @@ class CancelOrderToolTest {
         OrderService orderService = mock(OrderService.class);
 
         when(orderService.cancelOrder("1013"))
-                .thenReturn("Order 1013 has been cancelled successfully.");
+        .thenReturn(new CancelOrderResult(
+                true,
+                "Order 1013 has been cancelled successfully."
+        ));
 
         CancelOrderTool tool = new CancelOrderTool(orderService);
 
@@ -30,9 +33,10 @@ class CancelOrderToolTest {
         OrderService orderService = mock(OrderService.class);
 
         when(orderService.cancelOrder("1007"))
-                .thenReturn(
-                        "Order 1007 cannot be cancelled because its current status is SHIPPED."
-                );
+        .thenReturn(new CancelOrderResult(
+                false,
+                "Order 1007 cannot be cancelled because its current status is SHIPPED."
+        ));
 
         CancelOrderTool tool = new CancelOrderTool(orderService);
 
@@ -55,4 +59,34 @@ class CancelOrderToolTest {
         assertTrue(result.isRequiresHuman());
         verifyNoInteractions(orderService);
     }
+
+    @Test
+    void alreadyCancelledOrderShouldRequireHumanReview() {
+
+        OrderService orderService = mock(OrderService.class);
+
+        when(orderService.cancelOrder("1013"))
+                .thenReturn(new CancelOrderResult(
+                        false,
+                        "Order 1013 is already cancelled."
+                ));
+
+        CancelOrderTool tool = new CancelOrderTool(orderService);
+
+        AgentResult result = tool.execute(1013L);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.isRequiresHuman());
+        assertEquals(
+                "Order 1013 is already cancelled.",
+                result.getMessage()
+        );
+
+        verify(orderService).cancelOrder("1013");
+    }
 }
+
+
+
+
+

@@ -27,22 +27,22 @@ public class CancelOrderTool implements AgentTool {
             );
         }
 
-        String result = orderService.cancelOrder(
+        CancelOrderResult result = orderService.cancelOrder(
                 String.valueOf(orderId)
         );
 
-        if (result.contains("successfully")) {
+        if (result.isSuccess()) {
             return new AgentResult(
                     true,
                     false,
-                    result
+                    result.getMessage()
             );
         }
 
         return new AgentResult(
                 false,
                 true,
-                result
+                result.getMessage()
         );
     }
 }
