@@ -55,32 +55,43 @@ public class TicketService {
         savedTicket.setAiConfidence(aiResponse.getConfidence());
         
         savedTicket.setAiStatus("AI_COMPLETED");
-        
-
-        if (aiResponse.getConfidence() >= CONFIDENCE_THRESHOLD) {
-                savedTicket.setAiDecision("AUTO_HANDLED");
+        if(aiResponse.getConfidence() >= CONFIDENCE_THRESHOLD){
+            try{
                 AgentResult agentResult = agentService.handleTicket(
-                    savedTicket.getSubCategory(),
-                    savedTicket.getOrderId()
-            );
-            savedTicket.setResolution(agentResult.getMessage());
-            if (agentResult.isSuccess()) {
-                savedTicket.setAiDecision("AUTO_HANDLED");
-                savedTicket.setStatus("RESOLVED");
-            } else if(agentResult.isRequiresHuman()){
+                        savedTicket.getSubCategory(),
+                        savedTicket.getOrderId()
+                );
+                savedTicket.setResolution(agentResult.getMessage());
+                if(agentResult.isSuccess()) {
+                    savedTicket.setAiDecision("AUTO_HANDLED");
+                    savedTicket.setStatus("RESOLVED");
+                }else{
+                    savedTicket.setAiDecision("HUMAN_REVIEW");
+                    savedTicket.setStatus("OPEN");
+                }
+            }catch(Exception e){
+                System.out.println(
+                        "Agent tool execution failed: " + e.getMessage()
+                );
                 savedTicket.setAiDecision("HUMAN_REVIEW");
                 savedTicket.setStatus("OPEN");
+                savedTicket.setResolution(
+                        "Automated processing failed. Human review is required."
+                );
             }
         } else {
             savedTicket.setAiDecision("HUMAN_REVIEW");
-      }
+            savedTicket.setStatus("OPEN");
+        }
         } catch (Exception e) {
             System.out.println("AI service call failed:" + e.getMessage());
             savedTicket.setAiStatus("AI_FAILED");
             savedTicket.setAiDecision("HUMAN_REVIEW");
             savedTicket.setStatus("OPEN");
+            savedTicket.setResolution(
+                    "AI service failed. Human review is required."
+            );
         }
-
         return ticketRepository.save(savedTicket);
     }
 
