@@ -27,6 +27,7 @@ public class Ticket {
     private String description;
 
     private String assignedTo;
+    private String assignedTeam;
     private Double aiConfidence;
     private String aiStatus;
     private String aiDecision;

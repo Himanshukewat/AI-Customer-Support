@@ -19,11 +19,16 @@ public class TicketService {
     private final AIService aiService;
     private static final double CONFIDENCE_THRESHOLD = 0.80;
     private final AgentService agentService;
+    private final TeamRoutingService teamRoutingService;
 
-    public TicketService(TicketRepository ticketRepository,AIService aiService, AgentService agentService) {
+    public TicketService(TicketRepository ticketRepository,
+        AIService aiService,
+        AgentService agentService,
+        TeamRoutingService teamRoutingService) {
         this.ticketRepository = ticketRepository;
         this.aiService = aiService;
         this.agentService = agentService;
+        this.teamRoutingService = teamRoutingService;
     }
 
     public Ticket createTicket(Ticket ticket) {
@@ -49,6 +54,13 @@ public class TicketService {
         // store ai result in ticket
 
         savedTicket.setCategory(aiResponse.getCategory());
+        if (aiResponse.getConfidence() >= CONFIDENCE_THRESHOLD) {
+            savedTicket.setAssignedTeam(
+                    teamRoutingService.getTeam(aiResponse.getCategory())
+            );
+        } else {
+            savedTicket.setAssignedTeam("GENERAL_SUPPORT");
+        }     
         savedTicket.setSubCategory(aiResponse.getSub_category());
         savedTicket.setSentiment(aiResponse.getSentiment());
         savedTicket.setPriority(aiResponse.getPriority());

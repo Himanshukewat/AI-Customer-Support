@@ -22,6 +22,7 @@ class TicketServiceTest {
         AgentService agentService =
                 Mockito.mock(AgentService.class);
         Ticket ticket = new Ticket();
+        TeamRoutingService teamRoutingService = Mockito.mock(TeamRoutingService.class);
         ticket.setTicketId("TEST-EXCEPTION");
         ticket.setDescription("I want to track my order");
         ticket.setOrderId(1013L);
@@ -44,7 +45,8 @@ class TicketServiceTest {
         TicketService ticketService = new TicketService(
                 ticketRepository,
                 aiService,
-                agentService
+                agentService,
+                teamRoutingService
         );
 
         Ticket result = ticketService.createTicket(ticket);
@@ -68,6 +70,7 @@ class TicketServiceTest {
         AIService aiService = Mockito.mock(AIService.class);
         AgentService agentService =
                 Mockito.mock(AgentService.class);
+        TeamRoutingService teamRoutingService = Mockito.mock(TeamRoutingService.class);
         Ticket ticket = new Ticket();
         ticket.setTicketId("TEST-AI-FAILURE");
         ticket.setDescription("I want to check my invoice");
@@ -82,7 +85,8 @@ class TicketServiceTest {
         TicketService ticketService = new TicketService(
                 ticketRepository,
                 aiService,
-                agentService
+                agentService,
+                teamRoutingService
         );
 
         Ticket result = ticketService.createTicket(ticket);
@@ -111,6 +115,9 @@ class TicketServiceTest {
 
         AgentService agentService =
                 Mockito.mock(AgentService.class);
+        TeamRoutingService teamRoutingService = Mockito.mock(TeamRoutingService.class);
+        
+
 
         Ticket ticket = new Ticket();
         ticket.setTicketId("TEST-LOW-CONFIDENCE");
@@ -133,11 +140,12 @@ class TicketServiceTest {
         TicketService ticketService = new TicketService(
                 ticketRepository,
                 aiService,
-                agentService
+                agentService,
+                teamRoutingService
         );
 
         Ticket result = ticketService.createTicket(ticket);
-
+        assertEquals("GENERAL_SUPPORT", result.getAssignedTeam());
         assertEquals("AI_COMPLETED", result.getAiStatus());
         assertEquals("HUMAN_REVIEW", result.getAiDecision());
         assertEquals("OPEN", result.getStatus());
@@ -152,6 +160,8 @@ class TicketServiceTest {
         TicketRepository ticketRepository = Mockito.mock(TicketRepository.class);
         AIService aiService = Mockito.mock(AIService.class);
         AgentService agentService = Mockito.mock(AgentService.class);
+        TeamRoutingService teamRoutingService = Mockito.mock(TeamRoutingService.class);
+
 
         Ticket ticket = new Ticket();
         ticket.setTicketId("TEST_MISSING_ORDER");
@@ -177,7 +187,8 @@ class TicketServiceTest {
         TicketService ticketService = new TicketService(
                 ticketRepository,
                 aiService,
-                agentService
+                agentService,
+                teamRoutingService
         );
 
         Ticket result = ticketService.createTicket(ticket);
@@ -204,6 +215,8 @@ class TicketServiceTest {
 
         AgentService agentService =
                 Mockito.mock(AgentService.class);
+        TeamRoutingService teamRoutingService = Mockito.mock(TeamRoutingService.class);
+
 
         Ticket ticket = new Ticket();
         ticket.setTicketId("TEST-UNKNOWN-INTENT");
@@ -233,7 +246,8 @@ class TicketServiceTest {
         TicketService ticketService = new TicketService(
                 ticketRepository,
                 aiService,
-                agentService
+                agentService,
+                teamRoutingService
         );
 
         Ticket result = ticketService.createTicket(ticket);
@@ -257,6 +271,8 @@ class TicketServiceTest {
         TicketRepository ticketRepository = mock(TicketRepository.class);
         AIService aiService = mock(AIService.class);
         AgentService agentService = mock(AgentService.class);
+        TeamRoutingService teamRoutingService = Mockito.mock(TeamRoutingService.class);
+
 
         Ticket ticket = new Ticket();
         ticket.setTicketId("TEST-ASSIGN");
@@ -270,7 +286,7 @@ class TicketServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         TicketService ticketService = new TicketService(
-                ticketRepository, aiService, agentService
+                ticketRepository, aiService, agentService, teamRoutingService
         );
 
         Ticket result = ticketService.assignTicket(1L, "agent1");
@@ -286,6 +302,8 @@ class TicketServiceTest {
         TicketRepository ticketRepository = mock(TicketRepository.class);
         AIService aiService = mock(AIService.class);
         AgentService agentService = mock(AgentService.class);
+        TeamRoutingService teamRoutingService = Mockito.mock(TeamRoutingService.class);
+
 
         Ticket ticket = new Ticket();
         ticket.setTicketId("TEST-RESOLVE");
@@ -300,7 +318,7 @@ class TicketServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         TicketService ticketService = new TicketService(
-                ticketRepository, aiService, agentService
+                ticketRepository, aiService, agentService, teamRoutingService
         );
 
         Ticket result = ticketService.resolveTicket(
@@ -320,6 +338,8 @@ class TicketServiceTest {
         TicketRepository ticketRepository = mock(TicketRepository.class);
         AIService aiService = mock(AIService.class);
         AgentService agentService = mock(AgentService.class);
+        TeamRoutingService teamRoutingService = Mockito.mock(TeamRoutingService.class);
+
 
         Ticket ticket = new Ticket();
         ticket.setAiDecision("AUTO_HANDLED");
@@ -329,7 +349,7 @@ class TicketServiceTest {
                 .thenReturn(java.util.Optional.of(ticket));
 
         TicketService ticketService = new TicketService(
-                ticketRepository, aiService, agentService
+                ticketRepository, aiService, agentService, teamRoutingService
         );
 
         Ticket result = ticketService.assignTicket(3L, "agent1");
@@ -344,6 +364,7 @@ class TicketServiceTest {
         TicketRepository ticketRepository = mock(TicketRepository.class);
         AIService aiService = mock(AIService.class);
         AgentService agentService = mock(AgentService.class);
+        TeamRoutingService teamRoutingService = Mockito.mock(TeamRoutingService.class);
 
         Ticket ticket = new Ticket();
         ticket.setStatus("OPEN");
@@ -353,7 +374,7 @@ class TicketServiceTest {
                 .thenReturn(java.util.Optional.of(ticket));
 
         TicketService ticketService = new TicketService(
-                ticketRepository, aiService, agentService
+                ticketRepository, aiService, agentService, teamRoutingService
         );
 
         Ticket result = ticketService.resolveTicket(
@@ -371,12 +392,14 @@ class TicketServiceTest {
         TicketRepository ticketRepository = mock(TicketRepository.class);
         AIService aiService = mock(AIService.class);
         AgentService agentService = mock(AgentService.class);
+        TeamRoutingService teamRoutingService = Mockito.mock(TeamRoutingService.class);
+
 
         when(ticketRepository.findById(999L))
                 .thenReturn(java.util.Optional.empty());
 
         TicketService ticketService = new TicketService(
-                ticketRepository, aiService, agentService
+                ticketRepository, aiService, agentService, teamRoutingService
         );
 
         Ticket result = ticketService.assignTicket(999L, "agent1");
