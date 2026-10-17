@@ -67,10 +67,18 @@ public class TicketService {
         savedTicket.setAiConfidence(aiResponse.getConfidence());
         
         savedTicket.setAiStatus("AI_COMPLETED");
-        if(aiResponse.getConfidence() >= CONFIDENCE_THRESHOLD){
+
+        String intent = savedTicket.getSubCategory();
+
+        boolean automationAllowed  = "track_order".equalsIgnoreCase(intent)
+         || "track_refund".equalsIgnoreCase(intent) 
+         || "check_invoice".equalsIgnoreCase(intent);
+
+        if(aiResponse.getConfidence() >= CONFIDENCE_THRESHOLD 
+        && automationAllowed){
             try{
                 AgentResult agentResult = agentService.handleTicket(
-                        savedTicket.getSubCategory(),
+                        intent,
                         savedTicket.getOrderId()
                 );
                 savedTicket.setResolution(agentResult.getMessage());
@@ -94,6 +102,9 @@ public class TicketService {
         } else {
             savedTicket.setAiDecision("HUMAN_REVIEW");
             savedTicket.setStatus("OPEN");
+            savedTicket.setResolution(
+                    "This request requires human review."
+            );
         }
         } catch (Exception e) {
             System.out.println("AI service call failed:" + e.getMessage());

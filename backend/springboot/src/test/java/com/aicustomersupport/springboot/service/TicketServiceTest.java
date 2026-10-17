@@ -256,11 +256,12 @@ class TicketServiceTest {
         assertEquals("HUMAN_REVIEW", result.getAiDecision());
         assertEquals("OPEN", result.getStatus());
         assertEquals(
-                "No agent tool available for this request.",
+                "This request requires human review.",
                 result.getResolution()
         );
+        verify(agentService, never())
+        .handleTicket(anyString(), any());
 
-        verify(agentService).handleTicket("unknown_intent", 1013L);
     }
 
 
@@ -407,5 +408,50 @@ class TicketServiceTest {
         assertNull(result);
         verify(ticketRepository, never()).save(any(Ticket.class));
     }
+
+
+    
+        @Test
+        void highConfidenceCancellationShouldRequireHumanReview() {
+                TicketRepository ticketRepository = mock(TicketRepository.class);
+                AIService aiService = mock(AIService.class);
+                AgentService agentService = mock(AgentService.class);
+                TeamRoutingService teamRoutingService = new TeamRoutingService();
+
+                Ticket ticket = new Ticket();
+                ticket.setTicketId("TEST-CANCEL-REVIEW");
+                ticket.setDescription("Please cancel my order");
+                ticket.setOrderId(1013L);
+
+                when(ticketRepository.save(any(Ticket.class)))
+                        .thenAnswer(invocation -> invocation.getArgument(0));
+
+                TicketAIResponse aiResponse = new TicketAIResponse();
+                aiResponse.setCategory("CANCEL");
+                aiResponse.setSub_category("cancel_order");
+                aiResponse.setSentiment("Neutral");
+                aiResponse.setPriority("medium");
+                aiResponse.setConfidence(0.95);
+
+                when(aiService.analyzeTicket(any(TicketAIRequest.class)))
+                        .thenReturn(aiResponse);
+
+                TicketService ticketService = new TicketService(
+                        ticketRepository,
+                        aiService,
+                        agentService,
+                        teamRoutingService
+                );
+
+                Ticket result = ticketService.createTicket(ticket);
+
+                assertEquals("HUMAN_REVIEW", result.getAiDecision());
+                assertEquals("OPEN", result.getStatus());
+                assertEquals("ORDER_MANAGEMENT", result.getAssignedTeam());
+
+                verify(agentService, never())
+                        .handleTicket("cancel_order", 1013L);
+        }
+
 
 }
