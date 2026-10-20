@@ -81,4 +81,23 @@ public class TicketController {
         }
         return ResponseEntity.ok(ticket);
     }
+
+    @PutMapping ("/tickets/{id}/approve-cancellation")
+    public ResponseEntity<?> approveCancellation(@PathVariable Long id) {
+        Ticket ticket = ticketService.approveCancellation(id);
+        if (ticket == null) {
+            return ResponseEntity.badRequest()
+                    .body("Ticket not found or cancellation cannot be approved.");
+        }
+        return ResponseEntity.ok(ticket);
+    }
+    @PutMapping("/tickets/{id}/reject-cancellation")
+    public ResponseEntity<?> rejectCancellation(@PathVariable Long id) {
+        Ticket ticket = ticketService.rejectCancellation(id);
+        if (ticket == null) {
+            return ResponseEntity.badRequest()
+                    .body("Ticket not found or cancellation cannot be rejected.");
+        }
+        return ResponseEntity.ok(ticket);
+    }
 }

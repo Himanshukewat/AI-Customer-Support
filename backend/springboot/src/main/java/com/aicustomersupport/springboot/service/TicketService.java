@@ -199,4 +199,49 @@ public class TicketService {
         ticket.setStatus("RESOLVED");
         return ticketRepository.save(ticket);
     }
+
+    
+    public Ticket approveCancellation(Long id) {
+        Ticket ticket = ticketRepository.findById(id).orElse(null);
+        if (ticket == null) {
+            return null;
+        }
+        if (!"HUMAN_REVIEW".equalsIgnoreCase(ticket.getAiDecision())
+                || !"cancel_order".equalsIgnoreCase(ticket.getSubCategory())
+                || !"OPEN".equalsIgnoreCase(ticket.getStatus())) {
+            return null;
+        }
+        if (ticket.getOrderId() == null) {
+            return null;
+        }
+        AgentResult result = agentService.handleTicket(
+                "cancel_order",
+                ticket.getOrderId()
+        );
+        ticket.setResolution(result.getMessage());
+        if (result.isSuccess()) {
+            ticket.setAiDecision("HUMAN_APPROVED");
+            ticket.setStatus("RESOLVED");
+        } else {
+            ticket.setAiDecision("HUMAN_APPROVED");
+            ticket.setStatus("OPEN");
+        }
+        return ticketRepository.save(ticket);
+    }
+
+    public Ticket rejectCancellation(Long id) {
+        Ticket ticket = ticketRepository.findById(id).orElse(null);
+        if (ticket == null) {
+            return null;
+        }
+        if (!"HUMAN_REVIEW".equalsIgnoreCase(ticket.getAiDecision())
+                || !"cancel_order".equalsIgnoreCase(ticket.getSubCategory())
+                || !"OPEN".equalsIgnoreCase(ticket.getStatus())) {
+            return null;
+        }
+        ticket.setAiDecision("HUMAN_REJECTED");
+        ticket.setStatus("RESOLVED");
+        ticket.setResolution("Cancellation rejected by human agent.");
+        return ticketRepository.save(ticket);
+    }
 }

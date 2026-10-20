@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import com.aicustomersupport.springboot.repository.OrderRepository;
 
 import com.aicustomersupport.springboot.entity.Order;
+import java.util.List;
 
 @Service
 public class OrderService {
@@ -16,6 +17,10 @@ public class OrderService {
 
     public Order getOrderByOrderId(String orderId) {
         return orderRepository.findByOrderId(orderId).orElse(null);
+    }
+
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
     }
 
  /*

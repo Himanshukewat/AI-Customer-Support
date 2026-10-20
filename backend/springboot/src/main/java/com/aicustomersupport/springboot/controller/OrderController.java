@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import com.aicustomersupport.springboot.service.OrderService;
 import com.aicustomersupport.springboot.entity.Order;
+import java.util.List;
 
 
 @RestController 
@@ -20,6 +21,11 @@ public class OrderController {
     @GetMapping("/orders/{orderId}")
     public Order getOrderByOrderId(@PathVariable String orderId) {
         return orderService.getOrderByOrderId(orderId);
+    }
+
+    @GetMapping("/orders")
+    public List<Order> getAllOrders() {
+        return orderService.getAllOrders();
     }
     
 }
