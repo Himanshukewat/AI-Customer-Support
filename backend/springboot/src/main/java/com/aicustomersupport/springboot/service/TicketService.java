@@ -106,8 +106,12 @@ public class TicketService {
                     "This request requires human review."
             );
         }
-        } catch (Exception e) {
-            System.out.println("AI service call failed:" + e.getMessage());
+        } 
+        catch (Exception e) {
+            System.err.println("AI service call failed for ticket ID: "
+                    + savedTicket.getId());
+            e.printStackTrace();
+
             savedTicket.setAiStatus("AI_FAILED");
             savedTicket.setAiDecision("HUMAN_REVIEW");
             savedTicket.setStatus("OPEN");
