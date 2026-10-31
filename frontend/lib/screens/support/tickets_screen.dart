@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../models/ticket.dart';
+import '../../services/ticket_service.dart';
 import 'ticket_details_screen.dart';
 
 class TicketsScreen extends StatefulWidget {
@@ -8,84 +10,107 @@ class TicketsScreen extends StatefulWidget {
 }
 
 class _TicketsScreenState extends State<TicketsScreen> {
+  final TicketService _ticketService = TicketService();
+
+  List<Ticket> tickets = [];
+
   String searchQuery = '';
   String selectedStatus = 'All';
   String selectedPriority = 'All';
 
-  final List<Map<String, String>> tickets = [
-    {
-      'id': 'T101',
-      'subject': 'Unable to reset password',
-      'category': 'ACCOUNT',
-      'priority': 'High',
-      'status': 'Open',
-      'agent': 'Ankit',
-      'sentiment': 'Negative'
-    },
-    {
-      'id': 'T102',
-      'subject': 'Refund request for order',
-      'category': 'PAYMENT',
-      'priority': 'Medium',
-      'status': 'In Progress',
-      'agent': 'Hardik',
-      'sentiment': 'Negative',
-    },
-    {
-      'id': 'T103',
-      'subject': 'Order delivery delayed',
-      'category': 'DELIVERY',
-      'priority': 'Low',
-      'status': 'Open',
-      'agent': 'Ravindra',
-      'sentiment': 'Neutral',
-    },
-    {
-      'id': 'T104',
-      'subject': 'Payment deducted twice',
-      'category': 'PAYMENT',
-      'priority': 'High',
-      'status': 'In Progress',
-      'agent': 'Rahul',
-      'sentiment': 'Negative',
-    },
-    {
-      'id': 'T105',
-      'subject': 'Account verification issue',
-      'category': 'ACCOUNT',
-      'priority': 'Medium',
-      'status': 'Resolved',
-      'agent': 'Priya',
-      'sentiment': 'Negative',
-    },
-  ];
+  bool isLoading = true;
+  String? errorMessage;
 
-  List<Map<String, String>> get filteredTickets {
+  @override
+  void initState() {
+    super.initState();
+    fetchTickets();
+  }
+
+  Future<void> fetchTickets() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final result = await _ticketService.getAllTickets();
+      if (!mounted) return;
+      setState(() {
+        tickets = result;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        errorMessage = e.toString();
+        isLoading = false;
+      });
+    }
+  }
+
+  String normalizeStatus(String? status) {
+    switch (status?.trim().toUpperCase()) {
+      case 'OPEN':
+        return 'Open';
+      case 'IN_PROGRESS':
+      case 'IN PROGRESS':
+        return 'In Progress';
+      case 'RESOLVED':
+        return 'Resolved';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  String normalizePriority(String? priority) {
+    switch (priority?.trim().toUpperCase()) {
+      case 'HIGH':
+        return 'High';
+      case 'MEDIUM':
+        return 'Medium';
+      case 'LOW':
+        return 'Low';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  List<Ticket> get filteredTickets {
     return tickets.where((ticket) {
       final query = searchQuery.toLowerCase();
       final matchesSearch =
-          ticket['id']!.toLowerCase().contains(query) ||
-          ticket['subject']!.toLowerCase().contains(query) ||
-          ticket['category']!.toLowerCase().contains(query);
-
+          (ticket.ticketId ?? '').toLowerCase().contains(query) ||
+          (ticket.description ?? '').toLowerCase().contains(query) ||
+          (ticket.category ?? '').toLowerCase().contains(query);
       final matchesStatus = selectedStatus == 'All' ||
-          ticket['status'] == selectedStatus;
-
+          normalizeStatus(ticket.status) == selectedStatus;
       final matchesPriority = selectedPriority == 'All' ||
-          ticket['priority'] == selectedPriority;
-
-      
-
+          normalizePriority(ticket.priority) == selectedPriority;
       return matchesSearch && matchesStatus && matchesPriority;
     }).toList();
   }
 
-
-  void openTicket(Map<String, String> ticket) {
+  void openTicket(Ticket ticket) {
+    final ticketMap = <String, String>{
+      'id': ticket.ticketId ?? 'ID-${ticket.id ?? 'Unknown'}',
+      'databaseId': ticket.id?.toString() ?? '',
+      'subject': ticket.description ?? 'No description available',
+      'category': ticket.category ?? 'Uncategorized',
+      'subCategory': ticket.subCategory ?? 'Not available',
+      'priority': normalizePriority(ticket.priority),
+      'status': normalizeStatus(ticket.status),
+      'agent': ticket.assignedTo ?? 'Unassigned',
+      'sentiment': ticket.sentiment ?? 'Unknown',
+      'aiConfidence': ticket.aiConfidence?.toString() ?? '',
+      'aiStatus': ticket.aiStatus ?? '',
+      'aiDecision': ticket.aiDecision ?? '',
+      'resolution': ticket.resolution ?? '',
+    };
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => TicketDetailsScreen(ticket: ticket),
+        builder: (_) => TicketDetailsScreen(ticket: ticketMap),
       ),
     );
   }
@@ -113,10 +138,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                 const SizedBox(height: 10),
                 Text(
                   'Assigned Tickets',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineMedium
-                      ?.copyWith(
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF172554),
                       ),
@@ -127,7 +149,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                   style: TextStyle(color: Colors.blueGrey),
                 ),
                 const SizedBox(height: 24),
-                // Search
+
                 TextField(
                   onChanged: (value) {
                     setState(() => searchQuery = value);
@@ -139,20 +161,10 @@ class _TicketsScreenState extends State<TicketsScreen> {
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE5E7EB),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE5E7EB),
-                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                // Filters
+               const SizedBox(height: 16),
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
@@ -181,50 +193,92 @@ class _TicketsScreenState extends State<TicketsScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                Text(
-                  '${filteredTickets.length} tickets found',
-                  style: const TextStyle(
-                    color: Colors.blueGrey,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (filteredTickets.isEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Column(
-                      children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 42,
-                          color: Colors.blueGrey,
-                        ),
-                        SizedBox(height: 12),
-                        Text('No tickets match your filters.'),
-                      ],
+                if (isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: CircularProgressIndicator(),
                     ),
                   )
-                else if (isDesktop)
-                  _buildTable()
-                else
-                  ...filteredTickets.map(
-                    (ticket) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _TicketCard(
-                        ticket: ticket,
-                        onTap: () => openTicket(ticket),
-                      ),
+                else if (errorMessage != null)
+                  _buildError()
+                else ...[
+                  Text(
+                    '${filteredTickets.length} tickets found',
+                    style: const TextStyle(
+                      color: Colors.blueGrey,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  if (filteredTickets.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 42,
+                            color: Colors.blueGrey,
+                          ),
+                          SizedBox(height: 12),
+                          Text('No tickets match your filters.'),
+                        ],
+                      ),
+                    )
+                  else if (isDesktop)
+                    _buildTable()
+                  else
+                    ...filteredTickets.map(
+                      (ticket) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _TicketCard(
+                          ticket: ticket,
+                          onTap: () => openTicket(ticket),
+                          normalizeStatus: normalizeStatus,
+                          normalizePriority: normalizePriority,
+                        ),
+                      ),
+                    ),
+                ],
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildError() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.error_outline, size: 40, color: Colors.red),
+          const SizedBox(height: 12),
+          const Text('Unable to load tickets'),
+          const SizedBox(height: 8),
+          Text(
+            errorMessage!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.blueGrey),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: fetchTickets,
+            child: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }
@@ -283,18 +337,26 @@ class _TicketsScreenState extends State<TicketsScreen> {
             return DataRow(
               onSelectChanged: (_) => openTicket(ticket),
               cells: [
-                DataCell(Text(ticket['id']!)),
+                DataCell(Text(
+                  ticket.ticketId ?? 'ID-${ticket.id ?? '-'}',
+                )),
                 DataCell(
                   SizedBox(
                     width: 200,
-                    child: Text(ticket['subject']!),
+                    child: Text(ticket.description ?? 'No description'),
                   ),
                 ),
-                DataCell(Text(ticket['category']!)),
-                DataCell(_StatusChip(value: ticket['priority']!)),
-                DataCell(_StatusChip(value: ticket['status']!)),
-                DataCell(Text(ticket['agent']!)),
-                DataCell(_StatusChip(value: ticket['sentiment']!),),
+                DataCell(Text(ticket.category ?? 'Unknown')),
+                DataCell(
+                  _StatusChip(value: normalizePriority(ticket.priority)),
+                ),
+                DataCell(
+                  _StatusChip(value: normalizeStatus(ticket.status)),
+                ),
+                DataCell(Text(ticket.assignedTo ?? 'Unassigned')),
+                DataCell(
+                  _StatusChip(value: ticket.sentiment ?? 'Unknown'),
+                ),
               ],
             );
           }).toList(),
@@ -305,10 +367,17 @@ class _TicketsScreenState extends State<TicketsScreen> {
 }
 
 class _TicketCard extends StatelessWidget {
-  final Map<String, String> ticket;
+  final Ticket ticket;
   final VoidCallback onTap;
+  final String Function(String?) normalizeStatus;
+  final String Function(String?) normalizePriority;
 
-  const _TicketCard({required this.ticket, required this.onTap});
+  const _TicketCard({
+    required this.ticket,
+    required this.onTap,
+    required this.normalizeStatus,
+    required this.normalizePriority,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -323,66 +392,68 @@ class _TicketCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                '#${ticket['id']}',
-                style: const TextStyle(
-                  color: Color(0xFF2563EB),
-                  fontWeight: FontWeight.bold,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  '#${ticket.ticketId ?? ticket.id ?? 'Unknown'}',
+                  style: const TextStyle(
+                    color: Color(0xFF2563EB),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              _StatusChip(value: ticket['priority']!),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            ticket['subject']!,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            ticket['category']!,
-            style: const TextStyle(
-              color: Colors.blueGrey,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              const Text(
-                'Sentiment: ',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                const Spacer(),
+                _StatusChip(
+                  value: normalizePriority(ticket.priority),
                 ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              ticket.description ?? 'No description available',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
-              _StatusChip(value: ticket['sentiment']!),
-            ],
-          ),
-          const Divider(height: 24),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              _StatusChip(value: ticket['status']!),
-              Text(
-                ticket['agent']!,
-                style: const TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              ticket.category ?? 'Uncategorized',
+              style: const TextStyle(
+                color: Colors.blueGrey,
+                fontSize: 12,
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Text(
+                  'Sentiment: ',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                _StatusChip(value: ticket.sentiment ?? 'Unknown'),
+              ],
+            ),
+            const Divider(height: 24),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                _StatusChip(value: normalizeStatus(ticket.status)),
+                Text(
+                  ticket.assignedTo ?? 'Unassigned',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -396,19 +467,18 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (value) {
-      'High' || 'Negative' => const Color(0xFFDC2626),
-      'Medium' || 'Neutral' => const Color(0xFFD97706),
+      'High' || 'Negative' || 'Strong Negative' =>
+        const Color(0xFFDC2626),
+      'Medium' || 'Neutral' =>
+        const Color(0xFFD97706),
       'Low' || 'Resolved' || 'Positive' =>
         const Color(0xFF059669),
-      'In Progress' => const Color(0xFF2563EB),
+      'In Progress' =>
+        const Color(0xFF2563EB),
       _ => const Color(0xFF64748B),
     };
-
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(20),
