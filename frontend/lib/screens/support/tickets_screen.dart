@@ -123,13 +123,16 @@ class _TicketsScreenState extends State<TicketsScreen> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth >= 900;
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(isDesktop ? 28 : 16),
+          return RefreshIndicator(
+            onRefresh: fetchTickets,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.all(isDesktop ? 28 : 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'SUPPORT TEAM / TICKETS',
+                  'AGENT WORKSPACE / MY TICKETS',
                   style: TextStyle(
                     color: Colors.blueGrey,
                     fontSize: 12,
@@ -138,7 +141,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Assigned Tickets',
+                  'My Tickets',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF172554),
@@ -220,7 +223,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Column(
+                      child: Column(
                         children: [
                           Icon(
                             Icons.search_off,
@@ -228,7 +231,11 @@ class _TicketsScreenState extends State<TicketsScreen> {
                             color: Colors.blueGrey,
                           ),
                           SizedBox(height: 12),
-                          Text('No tickets match your filters.'),
+                          Text(
+                            tickets.isEmpty
+                                ? 'No tickets available yet.'
+                                : 'No tickets match your filters.',
+                          )
                         ],
                       ),
                     )
@@ -248,6 +255,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                     ),
                 ],
               ],
+            ),
             ),
           );
         },

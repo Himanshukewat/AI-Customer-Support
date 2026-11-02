@@ -34,8 +34,7 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
     currentPriority = widget.ticket['priority'] ?? 'Unknown';
     currentAssignedTo = widget.ticket['agent'] ?? 'Unassigned';
 
-    resolutionController.text =
-        widget.ticket['resolution'] ?? '';
+    
   }
 
  @override
@@ -208,6 +207,7 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
     final sentiment =
         ticket['sentiment'] ?? 'Not available';
     final isResolved = currentStatus == 'Resolved';
+    final canResolve = currentStatus == 'In Progress';
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
@@ -308,6 +308,14 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
                             ticket['category'] ?? 'Not available',
                           ),
                           detailItem(
+                            'AI Status',
+                            ticket['aiStatus'] ?? 'Not available',
+                          ),
+                          detailItem(
+                            'AI Decision',
+                            ticket['aiDecision'] ?? 'Not available',
+                          ),
+                          detailItem(
                             'Priority',
                             currentPriority,
                           ),
@@ -379,17 +387,19 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      if ((widget.ticket['resolution'] ?? '').isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        detailItem(
+                          'Previous AI Resolution',
+                          widget.ticket['resolution']!,
+                        ),
+                      ],
+                     const SizedBox(height: 16),
                       const Text(
                         'Resolution Notes',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Assigned Agent',
-                        style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -416,7 +426,7 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed:
-                              (isSaving || isResolved)
+                              ( !canResolve ||isSaving || isResolved)
                                   ? null
                                   : resolveTicket,
                           icon: Icon(
@@ -450,7 +460,17 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
                           ),
                         ),
                       ),
-
+                      if (!canResolve && !isResolved)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: Text(
+                            'Ticket must be assigned and In Progress before it can be resolved.',
+                            style: TextStyle(
+                              color: Colors.orange,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 10),
                       Row(
                         children: [

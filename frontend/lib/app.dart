@@ -37,7 +37,7 @@ class _SupportHomeState extends State<SupportHome> {
   static const Color navy = Color(0xFF172554);
   final List<String> pageTitles = [
     'Dashboard',
-    'Assigned Tickets',
+    'My Tickets',
     'Team Queue',
     'Reports',
     'Settings',
