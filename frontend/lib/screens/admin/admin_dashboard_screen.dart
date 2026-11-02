@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../admin/all_ticket_screen.dart';
+import '../admin/agent_management_screen.dart';
+import '../admin/team_management_screen.dart';
+import '../admin/reports_analytics_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -166,23 +170,51 @@ class AdminDashboardScreen extends StatelessWidget {
                   _ActionButton(
                     icon: Icons.confirmation_number_outlined,
                     label: 'All Tickets',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AllTicketsScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _ActionButton(
                     icon: Icons.people_outline,
                     label: 'Manage Agents',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AgentManagementScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _ActionButton(
                     icon: Icons.groups_outlined,
                     label: 'Manage Teams',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TeamManagementScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _ActionButton(
-                    icon: Icons.analytics_outlined,
-                    label: 'View Reports',
-                    onTap: () {},
-                  ),
+                  icon: Icons.analytics_outlined,
+                  label: 'View Reports',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ReportsAnalyticsScreen(),
+                      ),
+                    );
+                  },
+                ),
                 ],
               ),
             ),
