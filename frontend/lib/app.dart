@@ -5,6 +5,7 @@ import 'screens/support/tickets_screen.dart';
 import 'screens/support/team_queue_screen.dart';
 import 'screens/support/reports_screen.dart';
 import 'screens/support/profile_screen.dart';
+import 'screens/admin/admin_dashboard_screen.dart';
 
 class SupportApp extends StatelessWidget {
   const SupportApp({super.key});
@@ -34,6 +35,7 @@ class SupportHome extends StatefulWidget {
 
 class _SupportHomeState extends State<SupportHome> {
   int selectedIndex = 0;
+  bool isAdminWorkspace = false;
   static const Color navy = Color(0xFF172554);
   final List<String> pageTitles = [
     'Dashboard',
@@ -51,6 +53,9 @@ class _SupportHomeState extends State<SupportHome> {
     return pageTitles[selectedIndex];
   }
   Widget buildPage() {
+    if (isAdminWorkspace) {
+      return const AdminDashboardScreen();
+    }
     switch (selectedIndex) {
       case 0:
         return const DashboardScreen();
@@ -84,7 +89,7 @@ class _SupportHomeState extends State<SupportHome> {
         final isDesktop = constraints.maxWidth >= 900;
 
         return Scaffold(
-          drawer: isDesktop
+          drawer: (isDesktop || isAdminWorkspace)
               ? null
               : Drawer(
                   backgroundColor: navy,
@@ -94,7 +99,7 @@ class _SupportHomeState extends State<SupportHome> {
                 ),
           body: Row(
             children: [
-              if (isDesktop)
+              if (isDesktop && !isAdminWorkspace)
                 SizedBox(
                   width: 240,
                   child: buildSidebar(),
@@ -119,28 +124,47 @@ class _SupportHomeState extends State<SupportHome> {
                             ),
                           Expanded(
                             child: Text(
-                              isDesktop
-                                  ? 'Agent Workspace'
-                                  : currentPageTitle,
+                              isAdminWorkspace
+                                  ? 'Admin Dashboard'
+                                  : isDesktop
+                                      ? 'Agent Workspace'
+                                      : currentPageTitle,
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-                          IconButton(
-                            tooltip: 'My Profile',
+                          TextButton.icon(
                             onPressed: () {
-                              setState(() => selectedIndex = 5);
+                              setState(() {
+                                isAdminWorkspace = !isAdminWorkspace;
+                                selectedIndex = 0;
+                              });
                             },
-                            icon: const CircleAvatar(
-                              backgroundColor: Color(0xFFDBEAFE),
-                              child: Icon(
-                                Icons.person,
-                                color: Color(0xFF2563EB),
-                              ),
+                            icon: Icon(
+                              isAdminWorkspace
+                                  ? Icons.support_agent
+                                  : Icons.admin_panel_settings,
+                            ),
+                            label: Text(
+                              isAdminWorkspace ? 'Agent Workspace' : 'Admin Preview',
                             ),
                           ),
+                          if (!isAdminWorkspace)
+                            IconButton(
+                              tooltip: 'My Profile',
+                              onPressed: () {
+                                setState(() => selectedIndex = 5);
+                              },
+                              icon: const CircleAvatar(
+                                backgroundColor: Color(0xFFDBEAFE),
+                                child: Icon(
+                                  Icons.person,
+                                  color: Color(0xFF2563EB),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),

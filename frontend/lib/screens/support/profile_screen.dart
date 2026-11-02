@@ -267,7 +267,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               const SizedBox(height: 8),
                               DropdownButtonFormField<String>(
-                                value: selectedTeam,
+                                initialValue: selectedTeam,
                                 decoration: InputDecoration(
                                   filled: true,
                                   fillColor: const Color(0xFFF8FAFC),
