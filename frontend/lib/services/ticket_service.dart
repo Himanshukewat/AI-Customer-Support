@@ -20,9 +20,10 @@ class TicketService {
     }
 
     throw Exception(
-      'Failed to load tickets: ${response.statusCode}',
+      'Failed to load tickets: '
+      '${response.statusCode} - ${response.body}',
     );
-  }
+  }  
 
   
   Future<Ticket> resolveTicket(int id, String resolution) async {

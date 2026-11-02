@@ -50,7 +50,6 @@ public class TicketService {
         // send ticket to ai srvice
         try {
         TicketAIResponse aiResponse = aiService.analyzeTicket(aiRequest);
-        
         // store ai result in ticket
 
         savedTicket.setCategory(aiResponse.getCategory());

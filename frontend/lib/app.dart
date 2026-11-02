@@ -42,6 +42,14 @@ class _SupportHomeState extends State<SupportHome> {
     'Reports',
     'Settings',
   ];
+
+  String get currentPageTitle {
+    if (selectedIndex == 5) {
+      return 'My Profile';
+    }
+
+    return pageTitles[selectedIndex];
+  }
   Widget buildPage() {
     switch (selectedIndex) {
       case 0:
@@ -113,7 +121,7 @@ class _SupportHomeState extends State<SupportHome> {
                             child: Text(
                               isDesktop
                                   ? 'Agent Workspace'
-                                  : pageTitles[selectedIndex],
+                                  : currentPageTitle,
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,

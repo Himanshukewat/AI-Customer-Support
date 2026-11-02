@@ -53,6 +53,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
     switch (status?.trim().toUpperCase()) {
       case 'OPEN':
         return 'Open';
+      case 'IN_PROCESS':
       case 'IN_PROGRESS':
       case 'IN PROGRESS':
         return 'In Progress';
