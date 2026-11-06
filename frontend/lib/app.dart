@@ -6,6 +6,8 @@ import 'screens/support/team_queue_screen.dart';
 import 'screens/support/reports_screen.dart';
 import 'screens/support/profile_screen.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
+import 'screens/auth/splash_screen.dart';
+import 'widgets/logout_dialog.dart';
 
 class SupportApp extends StatelessWidget {
   const SupportApp({super.key});
@@ -22,21 +24,31 @@ class SupportApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: const Color(0xFFF5F7FB),
       ),
-      home: const SupportHome(),
+      home: const SplashScreen(),
     );
   }
 }
 
 class SupportHome extends StatefulWidget {
-  const SupportHome({super.key});
+  final String role;
+
+  const SupportHome({
+    super.key,
+    required this.role,
+  });
+
   @override
   State<SupportHome> createState() => _SupportHomeState();
 }
 
 class _SupportHomeState extends State<SupportHome> {
   int selectedIndex = 0;
-  bool isAdminWorkspace = false;
+
+  bool get isAdminWorkspace =>
+      widget.role.toUpperCase() == 'ADMIN';
+
   static const Color navy = Color(0xFF172554);
+
   final List<String> pageTitles = [
     'Dashboard',
     'My Tickets',
@@ -52,10 +64,12 @@ class _SupportHomeState extends State<SupportHome> {
 
     return pageTitles[selectedIndex];
   }
+
   Widget buildPage() {
     if (isAdminWorkspace) {
       return const AdminDashboardScreen();
     }
+
     switch (selectedIndex) {
       case 0:
         return const DashboardScreen();
@@ -70,15 +84,21 @@ class _SupportHomeState extends State<SupportHome> {
       case 5:
         return const ProfileScreen();
       default:
-        return Center(
-          child: Text(
-            '${pageTitles[selectedIndex]} — Coming soon',
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        return const Center(
+          child: Text('Page coming soon'),
         );
+    }
+  }
+
+  Future<void> handleLogout() async {
+    final shouldLogout = await showLogoutDialog(context);
+
+    if (shouldLogout && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Logout API integration pending'),
+        ),
+      );
     }
   }
 
@@ -104,16 +124,19 @@ class _SupportHomeState extends State<SupportHome> {
                   width: 240,
                   child: buildSidebar(),
                 ),
+
               Expanded(
                 child: Column(
                   children: [
                     Container(
                       height: 72,
                       color: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                      ),
                       child: Row(
                         children: [
-                          if (!isDesktop)
+                          if (!isDesktop && !isAdminWorkspace)
                             Builder(
                               builder: (context) => IconButton(
                                 onPressed: () {
@@ -122,6 +145,7 @@ class _SupportHomeState extends State<SupportHome> {
                                 icon: const Icon(Icons.menu),
                               ),
                             ),
+
                           Expanded(
                             child: Text(
                               isAdminWorkspace
@@ -135,27 +159,14 @@ class _SupportHomeState extends State<SupportHome> {
                               ),
                             ),
                           ),
-                          TextButton.icon(
-                            onPressed: () {
-                              setState(() {
-                                isAdminWorkspace = !isAdminWorkspace;
-                                selectedIndex = 0;
-                              });
-                            },
-                            icon: Icon(
-                              isAdminWorkspace
-                                  ? Icons.support_agent
-                                  : Icons.admin_panel_settings,
-                            ),
-                            label: Text(
-                              isAdminWorkspace ? 'Agent Workspace' : 'Admin Preview',
-                            ),
-                          ),
+
                           if (!isAdminWorkspace)
                             IconButton(
                               tooltip: 'My Profile',
                               onPressed: () {
-                                setState(() => selectedIndex = 5);
+                                setState(() {
+                                  selectedIndex = 5;
+                                });
                               },
                               icon: const CircleAvatar(
                                 backgroundColor: Color(0xFFDBEAFE),
@@ -165,10 +176,22 @@ class _SupportHomeState extends State<SupportHome> {
                                 ),
                               ),
                             ),
+
+                          IconButton(
+                            tooltip: 'Logout',
+                            onPressed: handleLogout,
+                            icon: const Icon(
+                              Icons.logout,
+                              color: Colors.red,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    Expanded(child: buildPage()),
+
+                    Expanded(
+                      child: buildPage(),
+                    ),
                   ],
                 ),
               ),
@@ -216,8 +239,10 @@ class _SupportHomeState extends State<SupportHome> {
               ],
             ),
           ),
+
           const Divider(color: Colors.white24),
           const SizedBox(height: 12),
+
           for (int i = 0; i < pageTitles.length; i++)
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -228,7 +253,8 @@ class _SupportHomeState extends State<SupportHome> {
                 color: Colors.transparent,
                 child: ListTile(
                   selected: selectedIndex == i,
-                  selectedTileColor: Colors.white.withValues(alpha: 0.12),
+                  selectedTileColor:
+                      Colors.white.withValues(alpha: 0.12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -250,8 +276,11 @@ class _SupportHomeState extends State<SupportHome> {
                     ),
                   ),
                   onTap: () {
-                    setState(() => selectedIndex = i);
-                    if (! (MediaQuery.of(context).size.width >= 900)) {
+                    setState(() {
+                      selectedIndex = i;
+                    });
+
+                    if (MediaQuery.of(context).size.width < 900) {
                       Navigator.of(context).pop();
                     }
                   },
