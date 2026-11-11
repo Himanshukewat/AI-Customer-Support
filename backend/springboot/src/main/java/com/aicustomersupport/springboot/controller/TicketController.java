@@ -6,6 +6,7 @@ import com.aicustomersupport.springboot.entity.Ticket;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -53,12 +54,14 @@ public class TicketController {
         return ticketService.updateTicket(id, ticket);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping ("/tickets/{id}")
     public ResponseEntity<?> deleteTicket(@PathVariable Long id) {
         ticketService.deleteTicket(id);
         return ResponseEntity.ok().build();
     } 
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/tickets/{id}/assign")
     public ResponseEntity<?> assignTicket(@PathVariable Long id, @RequestParam String assignedTo){
         Ticket ticket = ticketService.assignTicket(id, assignedTo);
@@ -82,6 +85,7 @@ public class TicketController {
         return ResponseEntity.ok(ticket);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping ("/tickets/{id}/approve-cancellation")
     public ResponseEntity<?> approveCancellation(@PathVariable Long id) {
         Ticket ticket = ticketService.approveCancellation(id);
@@ -91,6 +95,7 @@ public class TicketController {
         }
         return ResponseEntity.ok(ticket);
     }
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/tickets/{id}/reject-cancellation")
     public ResponseEntity<?> rejectCancellation(@PathVariable Long id) {
         Ticket ticket = ticketService.rejectCancellation(id);

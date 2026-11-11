@@ -11,6 +11,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import java.util.List;
 
 
 class TicketServiceTest {
@@ -299,6 +302,13 @@ class TicketServiceTest {
 
     @Test
     void shouldResolveAssignedTicket() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        "agent@example.com",
+                        null,
+                        List.of(() -> "ROLE_AGENT")
+                )
+        );
 
         TicketRepository ticketRepository = mock(TicketRepository.class);
         AIService aiService = mock(AIService.class);
@@ -310,8 +320,7 @@ class TicketServiceTest {
         ticket.setTicketId("TEST-RESOLVE");
         ticket.setAiDecision("HUMAN_REVIEW");
         ticket.setStatus("IN_PROCESS");
-        ticket.setAssignedTo("agent1");
-
+        ticket.setAssignedTo("agent@example.com");
         when(ticketRepository.findById(2L))
                 .thenReturn(java.util.Optional.of(ticket));
 
@@ -329,6 +338,7 @@ class TicketServiceTest {
         assertEquals("RESOLVED", result.getStatus());
         assertEquals("Issue resolved by support agent", result.getResolution());
         verify(ticketRepository).save(ticket);
+        SecurityContextHolder.clearContext();
     }
 
 
@@ -362,6 +372,14 @@ class TicketServiceTest {
     @Test
     void shouldNotResolveOpenTicket() {
 
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        "agent@example.com",
+                        null,
+                        List.of(() -> "ROLE_AGENT")
+                )
+        );
+
         TicketRepository ticketRepository = mock(TicketRepository.class);
         AIService aiService = mock(AIService.class);
         AgentService agentService = mock(AgentService.class);
@@ -370,6 +388,7 @@ class TicketServiceTest {
         Ticket ticket = new Ticket();
         ticket.setStatus("OPEN");
         ticket.setAiDecision("HUMAN_REVIEW");
+        ticket.setAssignedTo("agent@example.com");
 
         when(ticketRepository.findById(4L))
                 .thenReturn(java.util.Optional.of(ticket));
@@ -385,6 +404,7 @@ class TicketServiceTest {
         assertNull(result);
         assertEquals("OPEN", ticket.getStatus());
         verify(ticketRepository, never()).save(any(Ticket.class));
+        SecurityContextHolder.clearContext();
     }
 
     @Test

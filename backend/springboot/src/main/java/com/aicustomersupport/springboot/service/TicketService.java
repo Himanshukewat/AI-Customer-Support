@@ -8,6 +8,8 @@ import com.aicustomersupport.springboot.dto.AIService;
 import com.aicustomersupport.springboot.dto.TicketAIRequest;
 import com.aicustomersupport.springboot.dto.TicketAIResponse;
 import com.aicustomersupport.springboot.entity.Ticket;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 
 
@@ -122,24 +124,84 @@ public class TicketService {
     }
 
     public List<Ticket> getAllTickets() {
-        return ticketRepository.findAll();
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getAuthorities()
+                .stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) {
+            return ticketRepository.findAll();
+        }
+        return ticketRepository.findByAssignedToIgnoreCase(
+                getLoggedInEmail()
+        );
     }
 
     public List<Ticket> getHumanReviewTickets() {
-        System.out.println("HUMAN REVIEW ENDPOINT CALLED");
-        List<Ticket> tickets = ticketRepository.findByAiDecision("HUMAN_REVIEW");
-        System.out.println("HUMAN REVIEW COUNT: " + tickets.size());
-        return tickets;
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getAuthorities()
+                .stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) {
+            return ticketRepository.findByAiDecision("HUMAN_REVIEW");
+        }
+        return ticketRepository
+                .findByAiDecisionAndAssignedToIgnoreCase(
+                        "HUMAN_REVIEW",
+                        getLoggedInEmail()
+                );
     }
 
 
     public Ticket getTicketById(Long id) {
-        return ticketRepository.findById(id).orElse(null);
+        Ticket ticket = ticketRepository.findById(id).orElse(null);
+        if (ticket == null) {
+            return null;
+        }
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getAuthorities()
+                .stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) {
+            return ticket;
+        }
+        if (ticket.getAssignedTo() != null &&
+                ticket.getAssignedTo().equalsIgnoreCase(getLoggedInEmail())) {
+            return ticket;
+            }
+        throw new org.springframework.security.access.AccessDeniedException(
+                "You are not authorized to access this ticket."
+        );
     }
 
     public Ticket updateTicket(Long id, Ticket updatedTicket) {
         Ticket oldTicket = ticketRepository.findById(id).orElse(null);
-        if(oldTicket != null) {
+        if (oldTicket == null) {
+            return null;
+        }
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getAuthorities()
+                .stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin) {
+            if (oldTicket.getAssignedTo() == null ||
+                    !oldTicket.getAssignedTo().equalsIgnoreCase(getLoggedInEmail())) {
+                throw new org.springframework.security.access.AccessDeniedException(
+                        "You are not authorized to update this ticket."
+                );
+            }
+            // Agent can update only operational fields.
+            oldTicket.setStatus(updatedTicket.getStatus());
+            oldTicket.setResolution(updatedTicket.getResolution());
+        } else {
+            // Admin can update ticket fields.
             oldTicket.setUserId(updatedTicket.getUserId());
             oldTicket.setOrderId(updatedTicket.getOrderId());
             oldTicket.setCategory(updatedTicket.getCategory());
@@ -151,9 +213,8 @@ public class TicketService {
             oldTicket.setAssignedTo(updatedTicket.getAssignedTo());
             oldTicket.setAiConfidence(updatedTicket.getAiConfidence());
             oldTicket.setResolution(updatedTicket.getResolution());
-            return ticketRepository.save(oldTicket);
         }
-        return null;
+        return ticketRepository.save(oldTicket);
     }
 
 
@@ -194,6 +255,19 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(id).orElse(null);
         if (ticket == null) {
             return null;
+        }
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getAuthorities()
+                .stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin &&
+                (ticket.getAssignedTo() == null ||
+                !ticket.getAssignedTo().equalsIgnoreCase(getLoggedInEmail()))) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "You are not authorized to resolve this ticket."
+            );
         }
         if (!"IN_PROCESS".equalsIgnoreCase(ticket.getStatus())) {
             return null;
@@ -246,5 +320,12 @@ public class TicketService {
         ticket.setStatus("RESOLVED");
         ticket.setResolution("Cancellation rejected by human agent.");
         return ticketRepository.save(ticket);
+    }
+
+    private String getLoggedInEmail() {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        return authentication.getName();
     }
 }

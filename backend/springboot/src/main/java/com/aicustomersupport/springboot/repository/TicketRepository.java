@@ -10,4 +10,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 // Long   → Ticket ka primary-key type
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findByAiDecision(String aiDecision);
+    List<Ticket> findByAssignedToIgnoreCase(String assignedTo);
+    List<Ticket> findByAiDecisionAndAssignedToIgnoreCase(
+        String aiDecision,
+        String assignedTo
+);
 }
