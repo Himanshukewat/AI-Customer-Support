@@ -1,0 +1,2 @@
+# Local Spring Boot configuration
+backend/springboot/src/main/resources/application.properties
