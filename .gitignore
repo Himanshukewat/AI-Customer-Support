@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .env
+
+# Local Spring Boot configuration
+/backend/springboot/src/main/resources/application.properties
