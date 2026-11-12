@@ -5,6 +5,9 @@ import com.aicustomersupport.springboot.dto.TicketAIRequest;
 import com.aicustomersupport.springboot.dto.TicketAIResponse;
 import com.aicustomersupport.springboot.entity.Ticket;
 import com.aicustomersupport.springboot.repository.TicketRepository;
+import com.aicustomersupport.springboot.repository.SupportUserRepository;
+import com.aicustomersupport.springboot.entity.SupportUser;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,7 +52,8 @@ class TicketServiceTest {
                 ticketRepository,
                 aiService,
                 agentService,
-                teamRoutingService
+                teamRoutingService,
+                Mockito.mock(SupportUserRepository.class)
         );
 
         Ticket result = ticketService.createTicket(ticket);
@@ -89,7 +93,9 @@ class TicketServiceTest {
                 ticketRepository,
                 aiService,
                 agentService,
-                teamRoutingService
+                teamRoutingService,
+                Mockito.mock(SupportUserRepository.class)
+
         );
 
         Ticket result = ticketService.createTicket(ticket);
@@ -144,7 +150,8 @@ class TicketServiceTest {
                 ticketRepository,
                 aiService,
                 agentService,
-                teamRoutingService
+                teamRoutingService,
+                Mockito.mock(SupportUserRepository.class)
         );
 
         Ticket result = ticketService.createTicket(ticket);
@@ -191,7 +198,8 @@ class TicketServiceTest {
                 ticketRepository,
                 aiService,
                 agentService,
-                teamRoutingService
+                teamRoutingService,
+                Mockito.mock(SupportUserRepository.class)
         );
 
         Ticket result = ticketService.createTicket(ticket);
@@ -250,7 +258,8 @@ class TicketServiceTest {
                 ticketRepository,
                 aiService,
                 agentService,
-                teamRoutingService
+                teamRoutingService,
+                Mockito.mock(SupportUserRepository.class)
         );
 
         Ticket result = ticketService.createTicket(ticket);
@@ -276,8 +285,8 @@ class TicketServiceTest {
         AIService aiService = mock(AIService.class);
         AgentService agentService = mock(AgentService.class);
         TeamRoutingService teamRoutingService = Mockito.mock(TeamRoutingService.class);
-
-
+        SupportUserRepository supportUserRepository =
+            mock(SupportUserRepository.class);
         Ticket ticket = new Ticket();
         ticket.setTicketId("TEST-ASSIGN");
         ticket.setAiDecision("HUMAN_REVIEW");
@@ -285,20 +294,117 @@ class TicketServiceTest {
 
         when(ticketRepository.findById(1L))
                 .thenReturn(java.util.Optional.of(ticket));
+        
+        SupportUser agent = new SupportUser();
+        agent.setName("Test Agent");
+        agent.setEmail("agent@example.com");
+        agent.setRole("AGENT");
+        agent.setActive(true);
+
+        when(supportUserRepository.findByEmailAndRoleAndActiveTrue(
+                "agent@example.com", "AGENT"
+        )).thenReturn(java.util.Optional.of(agent));
 
         when(ticketRepository.save(any(Ticket.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         TicketService ticketService = new TicketService(
-                ticketRepository, aiService, agentService, teamRoutingService
+                ticketRepository, aiService, agentService, teamRoutingService, supportUserRepository
         );
 
-        Ticket result = ticketService.assignTicket(1L, "agent1");
+Ticket result = ticketService.assignTicket(
+        1L, "agent@example.com"
+);
 
-        assertEquals("agent1", result.getAssignedTo());
+assertEquals("agent@example.com", result.getAssignedTo());
         assertEquals("IN_PROCESS", result.getStatus());
         verify(ticketRepository).save(ticket);
     }
+
+
+        @Test
+        void shouldNotAssignTicketToNonExistingAgent() {
+
+        TicketRepository ticketRepository = mock(TicketRepository.class);
+        AIService aiService = mock(AIService.class);
+        AgentService agentService = mock(AgentService.class);
+        TeamRoutingService teamRoutingService = mock(TeamRoutingService.class);
+        SupportUserRepository supportUserRepository = mock(SupportUserRepository.class);
+
+        Ticket ticket = new Ticket();
+        ticket.setTicketId("TEST-INVALID-AGENT");
+        ticket.setAiDecision("HUMAN_REVIEW");
+        ticket.setStatus("OPEN");
+
+        when(ticketRepository.findById(10L))
+                .thenReturn(Optional.of(ticket));
+
+        when(supportUserRepository.findByEmailAndRoleAndActiveTrue(
+                "unknown@example.com", "AGENT"
+        )).thenReturn(Optional.empty());
+
+        TicketService ticketService = new TicketService(
+                ticketRepository,
+                aiService,
+                agentService,
+                teamRoutingService,
+                supportUserRepository
+        );
+
+        Ticket result = ticketService.assignTicket(
+                10L, "unknown@example.com"
+        );
+
+        assertNull(result);
+        assertNull(ticket.getAssignedTo());
+        assertEquals("OPEN", ticket.getStatus());
+
+        verify(ticketRepository, never()).save(any(Ticket.class));
+        }
+
+
+        @Test
+        void shouldNotAssignTicketToInactiveAgent() {
+
+        TicketRepository ticketRepository = mock(TicketRepository.class);
+        AIService aiService = mock(AIService.class);
+        AgentService agentService = mock(AgentService.class);
+        TeamRoutingService teamRoutingService = mock(TeamRoutingService.class);
+        SupportUserRepository supportUserRepository = mock(SupportUserRepository.class);
+
+        Ticket ticket = new Ticket();
+        ticket.setTicketId("TEST-INACTIVE-AGENT");
+        ticket.setAiDecision("HUMAN_REVIEW");
+        ticket.setStatus("OPEN");
+
+        when(ticketRepository.findById(11L))
+                .thenReturn(Optional.of(ticket));
+
+        // Inactive agent is not returned by the active-agent repository query.
+        when(supportUserRepository.findByEmailAndRoleAndActiveTrue(
+                "inactive@example.com", "AGENT"
+        )).thenReturn(Optional.empty());
+
+        TicketService ticketService = new TicketService(
+                ticketRepository,
+                aiService,
+                agentService,
+                teamRoutingService,
+                supportUserRepository
+        );
+
+        Ticket result = ticketService.assignTicket(
+                11L, "inactive@example.com"
+        );
+
+        assertNull(result);
+        assertNull(ticket.getAssignedTo());
+        assertEquals("OPEN", ticket.getStatus());
+
+        verify(ticketRepository, never()).save(any(Ticket.class));
+        }
+
+
 
     @Test
     void shouldResolveAssignedTicket() {
@@ -328,7 +434,7 @@ class TicketServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         TicketService ticketService = new TicketService(
-                ticketRepository, aiService, agentService, teamRoutingService
+                ticketRepository, aiService, agentService, teamRoutingService,Mockito.mock(SupportUserRepository.class)
         );
 
         Ticket result = ticketService.resolveTicket(
@@ -360,10 +466,11 @@ class TicketServiceTest {
                 .thenReturn(java.util.Optional.of(ticket));
 
         TicketService ticketService = new TicketService(
-                ticketRepository, aiService, agentService, teamRoutingService
+                ticketRepository, aiService, agentService, teamRoutingService,
+                        Mockito.mock(SupportUserRepository.class)
         );
 
-        Ticket result = ticketService.assignTicket(3L, "agent1");
+        Ticket result = ticketService.assignTicket(3L, "agent@example.com");
 
         assertNull(result);
         verify(ticketRepository, never()).save(any(Ticket.class));
@@ -394,7 +501,8 @@ class TicketServiceTest {
                 .thenReturn(java.util.Optional.of(ticket));
 
         TicketService ticketService = new TicketService(
-                ticketRepository, aiService, agentService, teamRoutingService
+                ticketRepository, aiService, agentService, teamRoutingService,
+                Mockito.mock(SupportUserRepository.class)
         );
 
         Ticket result = ticketService.resolveTicket(
@@ -420,10 +528,11 @@ class TicketServiceTest {
                 .thenReturn(java.util.Optional.empty());
 
         TicketService ticketService = new TicketService(
-                ticketRepository, aiService, agentService, teamRoutingService
+                ticketRepository, aiService, agentService, teamRoutingService,
+                Mockito.mock(SupportUserRepository.class)
         );
 
-        Ticket result = ticketService.assignTicket(999L, "agent1");
+        Ticket result = ticketService.assignTicket(999L, "agent@example.com");
 
         assertNull(result);
         verify(ticketRepository, never()).save(any(Ticket.class));
@@ -460,7 +569,8 @@ class TicketServiceTest {
                         ticketRepository,
                         aiService,
                         agentService,
-                        teamRoutingService
+                        teamRoutingService,
+                        Mockito.mock(SupportUserRepository.class)
                 );
 
                 Ticket result = ticketService.createTicket(ticket);
@@ -471,6 +581,40 @@ class TicketServiceTest {
 
                 verify(agentService, never())
                         .handleTicket("cancel_order", 1013L);
+        }
+
+
+        @Test
+        void shouldNotAssignTicketToWrongRoleUser() {
+        TicketRepository ticketRepository = mock(TicketRepository.class);
+        AIService aiService = mock(AIService.class);
+        AgentService agentService = mock(AgentService.class);
+        TeamRoutingService teamRoutingService = mock(TeamRoutingService.class);
+        SupportUserRepository supportUserRepository = mock(SupportUserRepository.class);
+
+        Ticket ticket = new Ticket();
+        ticket.setTicketId("TEST-WRONG-ROLE");
+        ticket.setAiDecision("HUMAN_REVIEW");
+        ticket.setStatus("OPEN");
+
+        when(ticketRepository.findById(12L)).thenReturn(Optional.of(ticket));
+
+        // User exists, but is not an active AGENT.
+        when(supportUserRepository.findByEmailAndRoleAndActiveTrue(
+                "admin@example.com", "AGENT"
+        )).thenReturn(Optional.empty());
+
+        TicketService ticketService = new TicketService(
+                ticketRepository, aiService, agentService,
+                teamRoutingService, supportUserRepository
+        );
+
+        Ticket result = ticketService.assignTicket(12L, "admin@example.com");
+
+        assertNull(result);
+        assertNull(ticket.getAssignedTo());
+        assertEquals("OPEN", ticket.getStatus());
+        verify(ticketRepository, never()).save(any(Ticket.class));
         }
 
 

@@ -3,6 +3,8 @@ package com.aicustomersupport.springboot.service;
 import java.util.*;
 
 import org.springframework.stereotype.Service;
+
+import com.aicustomersupport.springboot.repository.SupportUserRepository;
 import com.aicustomersupport.springboot.repository.TicketRepository;
 import com.aicustomersupport.springboot.dto.AIService;
 import com.aicustomersupport.springboot.dto.TicketAIRequest;
@@ -22,15 +24,18 @@ public class TicketService {
     private static final double CONFIDENCE_THRESHOLD = 0.80;
     private final AgentService agentService;
     private final TeamRoutingService teamRoutingService;
+    private final SupportUserRepository supportUserRepository;
 
     public TicketService(TicketRepository ticketRepository,
         AIService aiService,
         AgentService agentService,
-        TeamRoutingService teamRoutingService) {
+        TeamRoutingService teamRoutingService,
+        SupportUserRepository supportUserRepository) {
         this.ticketRepository = ticketRepository;
         this.aiService = aiService;
         this.agentService = agentService;
         this.teamRoutingService = teamRoutingService;
+        this.supportUserRepository = supportUserRepository;
     }
 
     public Ticket createTicket(Ticket ticket) {
@@ -236,18 +241,26 @@ public class TicketService {
             → DB save
      */
 
-    public Ticket assignTicket(Long id, String assignedTo){
+    public Ticket assignTicket(Long id, String assignedTo) {
         Ticket ticket = ticketRepository.findById(id).orElse(null);
-        if(ticket == null){
+        if (ticket == null) {
             return null;
         }
-        if(!"HUMAN_REVIEW".equalsIgnoreCase(ticket.getAiDecision())){
+        if (!"HUMAN_REVIEW".equalsIgnoreCase(ticket.getAiDecision())) {
             return null;
         }
-
-        ticket.setAssignedTo(assignedTo);
+        if (assignedTo == null || assignedTo.isBlank()) {
+            return null;
+        }
+        String agentEmail = assignedTo.trim();
+        boolean validAgent = supportUserRepository
+                .findByEmailAndRoleAndActiveTrue(agentEmail, "AGENT")
+                .isPresent();
+        if (!validAgent) {
+            return null;
+        }
+        ticket.setAssignedTo(agentEmail);
         ticket.setStatus("IN_PROCESS");
-
         return ticketRepository.save(ticket);
     }
 

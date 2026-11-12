@@ -8,4 +8,9 @@ public interface SupportUserRepository extends JpaRepository<SupportUser, Long> 
     Optional<SupportUser> findByEmail(String email);
     boolean existsByEmail(String email);
     boolean existsByRole(String role);
+
+    Optional<SupportUser> findByEmailAndRoleAndActiveTrue(
+            String email,
+            String role
+    );
 }
