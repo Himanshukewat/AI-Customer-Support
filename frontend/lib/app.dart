@@ -8,6 +8,8 @@ import 'screens/support/profile_screen.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
 import 'screens/auth/splash_screen.dart';
 import 'widgets/logout_dialog.dart';
+import 'services/auth_services.dart';
+import 'screens/auth/login_screen.dart';
 
 class SupportApp extends StatelessWidget {
   const SupportApp({super.key});
@@ -92,12 +94,15 @@ class _SupportHomeState extends State<SupportHome> {
 
   Future<void> handleLogout() async {
     final shouldLogout = await showLogoutDialog(context);
-
     if (shouldLogout && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Logout API integration pending'),
+      await AuthService().logout();
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const LoginScreen(),
         ),
+        (route) => false,
       );
     }
   }
