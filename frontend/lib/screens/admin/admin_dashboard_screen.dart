@@ -5,6 +5,7 @@ import '../admin/team_management_screen.dart';
 import '../admin/reports_analytics_screen.dart';
 import 'dart:convert';
 import '../../services/api_client.dart';
+import '../../screens/support/ticket_details_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -29,6 +30,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int resolvedTickets = 0;
   int totalAgents = 0;
   int activeAgents = 0;
+
+  List<dynamic> recentTickets = [];
 
   @override
   void initState() {
@@ -71,7 +74,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
         activeAgents = agents.where((agent) =>
             agent['active'] == true).length;
-
+        recentTickets = tickets.take(5).toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -89,6 +92,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => AllTicketsScreen(initialStatus: status),
+      ),
+    );
+  }
+
+  void openRecentTicket(Map<String, dynamic> ticket) {
+    final ticketMap = <String, String>{
+      'id': ticket['ticketId']?.toString() ??
+          'ID-${ticket['id'] ?? 'Unknown'}',
+      'databaseId': ticket['id']?.toString() ?? '',
+      'subject': ticket['description']?.toString() ??
+          'No description available',
+      'category': ticket['category']?.toString() ?? 'Uncategorized',
+      'subCategory': ticket['subCategory']?.toString() ?? 'Not available',
+      'priority': ticket['priority']?.toString() ?? 'Unknown',
+      'status': ticket['status']?.toString() ?? 'Unknown',
+      'agent': ticket['assignedTo']?.toString() ?? 'Unassigned',
+      'sentiment': ticket['sentiment']?.toString() ?? 'Unknown',
+      'aiConfidence': ticket['aiConfidence']?.toString() ?? '',
+      'aiStatus': ticket['aiStatus']?.toString() ?? '',
+      'aiDecision': ticket['aiDecision']?.toString() ?? '',
+      'resolution': ticket['resolution']?.toString() ?? '',
+    };
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TicketDetailsScreen(ticket: ticketMap),
       ),
     );
   }
@@ -243,9 +273,44 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             _SectionCard(
               title: 'Recent Tickets',
               icon: Icons.history,
-              child: const Text(
-                'Recent ticket activity will appear here.',
+              child: _isLoading
+    ? const Center(child: CircularProgressIndicator())
+    : _error != null
+        ? Text(
+            _error!,
+            style: const TextStyle(color: Colors.red),
+          )
+        : recentTickets.isEmpty
+            ? const Text(
+                'No tickets found.',
                 style: TextStyle(color: Colors.blueGrey),
+              )
+            : Column(
+                children: recentTickets.map((ticket) {
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(
+                      Icons.confirmation_number_outlined,
+                      color: AdminDashboardScreen.blue,
+                    ),
+                    title: Text(
+                      ticket['ticketId']?.toString() ?? 'Unknown Ticket',
+                    ),
+                    subtitle: Text(
+                      ticket['description']?.toString() ?? 'No description',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: Text(
+                      ticket['status']?.toString() ?? 'Unknown',
+                    ),
+                    onTap: () {
+                      openRecentTicket(
+                        Map<String, dynamic>.from(ticket),
+                      );
+                    },
+                  );
+                }).toList(),
               ),
             ),
 
@@ -431,52 +496,52 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  final String title;
-  final String subtitle;
+// class _InfoRow extends StatelessWidget {
+//   final String title;
+//   final String subtitle;
 
-  const _InfoRow({
-    required this.title,
-    required this.subtitle,
-  });
+//   const _InfoRow({
+//     required this.title,
+//     required this.subtitle,
+//   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.groups,
-            color: AdminDashboardScreen.blue,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.blueGrey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: const EdgeInsets.symmetric(vertical: 8),
+//       child: Row(
+//         children: [
+//           const Icon(
+//             Icons.groups,
+//             color: AdminDashboardScreen.blue,
+//           ),
+//           const SizedBox(width: 12),
+//           Expanded(
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   title,
+//                   style: const TextStyle(
+//                     fontWeight: FontWeight.w600,
+//                   ),
+//                 ),
+//                 const SizedBox(height: 4),
+//                 Text(
+//                   subtitle,
+//                   style: const TextStyle(
+//                     fontSize: 12,
+//                     color: Colors.blueGrey,
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 class _ActionButton extends StatelessWidget {
   final IconData icon;
