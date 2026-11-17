@@ -92,29 +92,34 @@ class _TicketsScreenState extends State<TicketsScreen> {
     }).toList();
   }
 
-  void openTicket(Ticket ticket) {
-    final ticketMap = <String, String>{
-      'id': ticket.ticketId ?? 'ID-${ticket.id ?? 'Unknown'}',
-      'databaseId': ticket.id?.toString() ?? '',
-      'subject': ticket.description ?? 'No description available',
-      'category': ticket.category ?? 'Uncategorized',
-      'subCategory': ticket.subCategory ?? 'Not available',
-      'priority': normalizePriority(ticket.priority),
-      'status': normalizeStatus(ticket.status),
-      'agent': ticket.assignedTo ?? 'Unassigned',
-      'sentiment': ticket.sentiment ?? 'Unknown',
-      'aiConfidence': ticket.aiConfidence?.toString() ?? '',
-      'aiStatus': ticket.aiStatus ?? '',
-      'aiDecision': ticket.aiDecision ?? '',
-      'resolution': ticket.resolution ?? '',
-    };
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => TicketDetailsScreen(ticket: ticketMap),
-      ),
-    );
+  Future<void> openTicket(Ticket ticket) async {
+      final ticketMap = <String, String>{
+        'id': ticket.ticketId ?? 'ID-${ticket.id ?? 'Unknown'}',
+        'databaseId': ticket.id?.toString() ?? '',
+        'subject': ticket.description ?? 'No description available',
+        'category': ticket.category ?? 'Uncategorized',
+        'subCategory': ticket.subCategory ?? 'Not available',
+        'priority': normalizePriority(ticket.priority),
+        'status': normalizeStatus(ticket.status),
+        'agent': ticket.assignedTo ?? 'Unassigned',
+        'sentiment': ticket.sentiment ?? 'Unknown',
+        'aiConfidence': ticket.aiConfidence?.toString() ?? '',
+        'aiStatus': ticket.aiStatus ?? '',
+        'aiDecision': ticket.aiDecision ?? '',
+        'resolution': ticket.resolution ?? '',
+      };
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => TicketDetailsScreen(ticket: ticketMap),
+        ),
+      );
+
+      if (!mounted) return;
+      await fetchTickets();
   }
+  
 
   @override
   Widget build(BuildContext context) {

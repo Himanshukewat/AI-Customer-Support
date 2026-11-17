@@ -207,7 +207,8 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
     final sentiment =
         ticket['sentiment'] ?? 'Not available';
     final isResolved = currentStatus == 'Resolved';
-    final canResolve = currentStatus == 'In Progress';
+    final canResolve = currentStatus == 'IN_PROCESS' ||
+      currentStatus == 'In Progress';
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(

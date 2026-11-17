@@ -4,7 +4,11 @@ import '../../services/ticket_service.dart';
 import '../support/ticket_details_screen.dart';
 
 class AllTicketsScreen extends StatefulWidget {
-  const AllTicketsScreen({super.key});
+  final String initialStatus;
+  const AllTicketsScreen({
+    super.key,
+    this.initialStatus = 'All',
+  });
 
   @override
   State<AllTicketsScreen> createState() => _AllTicketsScreenState();
@@ -27,6 +31,7 @@ class _AllTicketsScreenState extends State<AllTicketsScreen> {
   @override
   void initState() {
     super.initState();
+    selectedStatus = widget.initialStatus;
     fetchTickets();
   }
 
@@ -38,16 +43,13 @@ class _AllTicketsScreenState extends State<AllTicketsScreen> {
 
     try {
       final result = await _ticketService.getAllTickets();
-
       if (!mounted) return;
-
       setState(() {
         tickets = result;
         isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
-
       setState(() {
         errorMessage = e.toString();
         isLoading = false;

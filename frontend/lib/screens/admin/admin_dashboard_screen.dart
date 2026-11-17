@@ -3,12 +3,95 @@ import '../admin/all_ticket_screen.dart';
 import '../admin/agent_management_screen.dart';
 import '../admin/team_management_screen.dart';
 import '../admin/reports_analytics_screen.dart';
+import 'dart:convert';
+import '../../services/api_client.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
   static const Color navy = Color(0xFF172554);
   static const Color blue = Color(0xFF2563EB);
+
+  @override
+  State<AdminDashboardScreen> createState() =>
+      _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  final ApiClient _apiClient = ApiClient();
+
+  bool _isLoading = true;
+  String? _error;
+
+  int totalTickets = 0;
+  int openTickets = 0;
+  int inProgressTickets = 0;
+  int resolvedTickets = 0;
+  int totalAgents = 0;
+  int activeAgents = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchDashboardData();
+  }
+
+  Future<void> fetchDashboardData() async {
+    try {
+      final responses = await Future.wait([
+        _apiClient.get('/tickets'),
+        _apiClient.get('/users'),
+      ]);
+
+      if (responses[0].statusCode != 200 ||
+          responses[1].statusCode != 200) {
+        throw Exception('Failed to load dashboard data');
+      }
+
+      final List<dynamic> tickets = jsonDecode(responses[0].body);
+      final List<dynamic> agents = jsonDecode(responses[1].body);
+
+      if (!mounted) return;
+
+      setState(() {
+        totalTickets = tickets.length;
+
+        openTickets = tickets.where((ticket) =>
+            ticket['status']?.toString().toUpperCase() == 'OPEN').length;
+
+        inProgressTickets = tickets.where((ticket) {
+          final status = ticket['status']?.toString().toUpperCase();
+          return status == 'IN_PROCESS' || status == 'IN_PROGRESS';
+        }).length;
+
+        resolvedTickets = tickets.where((ticket) =>
+            ticket['status']?.toString().toUpperCase() == 'RESOLVED').length;
+
+        totalAgents = agents.length;
+
+        activeAgents = agents.where((agent) =>
+            agent['active'] == true).length;
+
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  void navigateToTickets(String status) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AllTicketsScreen(initialStatus: status),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +102,21 @@ class AdminDashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if(_isLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            if(_error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  'Error: $_error',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
             const Text(
               'ADMIN WORKSPACE / OVERVIEW',
               style: TextStyle(
@@ -32,7 +130,7 @@ class AdminDashboardScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: navy,
+                color: AdminDashboardScreen.navy,
               ),
             ),
             const SizedBox(height: 8),
@@ -62,56 +160,76 @@ class AdminDashboardScreen extends StatelessWidget {
                   children: [
                     SizedBox(
                       width: width,
-                      child: const _StatCard(
+                      child:  _StatCard(
                         title: 'Total Tickets',
-                        value: '—',
+                        value: _isLoading ? '...' : totalTickets.toString(),
                         icon: Icons.confirmation_number_outlined,
-                        color: blue,
+                        color: AdminDashboardScreen.blue,
+                        onTap: () => navigateToTickets('All'),
                       ),
                     ),
                     SizedBox(
                       width: width,
-                      child: const _StatCard(
+                      child:  _StatCard(
                         title: 'Open Tickets',
-                        value: '—',
+                        value: _isLoading ? '...' : openTickets.toString(),
                         icon: Icons.inbox_outlined,
                         color: Color(0xFFD97706),
+                        onTap: () => navigateToTickets('Open'),
                       ),
                     ),
                     SizedBox(
                       width: width,
-                      child: const _StatCard(
+                      child:  _StatCard(
                         title: 'In Progress',
-                        value: '—',
+                        value: _isLoading ? '...' : inProgressTickets.toString(),
                         icon: Icons.pending_actions,
                         color: Color(0xFF2563EB),
+                        onTap: () => navigateToTickets('In Progress'),
                       ),
                     ),
                     SizedBox(
                       width: width,
-                      child: const _StatCard(
+                      child:  _StatCard(
                         title: 'Resolved Tickets',
-                        value: '—',
+                        value: _isLoading ? '...' : resolvedTickets.toString(),
                         icon: Icons.check_circle_outline,
                         color: Color(0xFF059669),
+                        onTap: () => navigateToTickets('Resolved'),
                       ),
                     ),
                     SizedBox(
                       width: width,
-                      child: const _StatCard(
+                      child:  _StatCard(
                         title: 'Total Agents',
-                        value: '—',
+                        value: _isLoading ? '...' : totalAgents.toString(),
                         icon: Icons.support_agent,
                         color: Color(0xFF7C3AED),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AgentManagementScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     SizedBox(
                       width: width,
-                      child: const _StatCard(
+                      child:  _StatCard(
                         title: 'Active Teams',
                         value: '—',
                         icon: Icons.groups_outlined,
                         color: Color(0xFF0891B2),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const TeamManagementScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -120,32 +238,6 @@ class AdminDashboardScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 28),
-
-            // Team overview
-            _SectionCard(
-              title: 'Team Overview',
-              icon: Icons.groups_outlined,
-              child: const Column(
-                children: [
-                  _InfoRow(
-                    title: 'Account Support',
-                    subtitle: 'Team workload will appear here',
-                  ),
-                  Divider(),
-                  _InfoRow(
-                    title: 'Technical Support',
-                    subtitle: 'Team workload will appear here',
-                  ),
-                  Divider(),
-                  _InfoRow(
-                    title: 'General Support',
-                    subtitle: 'Team workload will appear here',
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
 
             // Recent tickets
             _SectionCard(
@@ -230,18 +322,23 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
+  final VoidCallback? onTap;
 
   const _StatCard({
     required this.title,
     required this.value,
     required this.icon,
     required this.color,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -275,13 +372,14 @@ class _StatCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Awaiting integration',
+            'Live data',
             style: TextStyle(
               fontSize: 12,
               color: Colors.blueGrey,
             ),
           ),
         ],
+      ),
       ),
     );
   }
